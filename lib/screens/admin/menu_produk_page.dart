@@ -1,6 +1,10 @@
 // File: lib/screens/admin/menu_produk_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class MenuProdukPage extends StatefulWidget {
   const MenuProdukPage({super.key});
@@ -98,6 +102,24 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  if (data['gambar_url'] != null &&
+                                      data['gambar_url'] != '')
+                                    Image.network(
+                                      data['gambar_url'],
+                                      height: 80,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    )
+                                  else
+                                    Container(
+                                      height: 80,
+                                      width: double.infinity,
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Icon(Icons.image_not_supported),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
                                   Text(
                                     data['nama'] ?? '-',
                                     style: const TextStyle(
@@ -155,75 +177,195 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
     final TextEditingController nama = TextEditingController(
       text: existing?['nama'] ?? '',
     );
-    final TextEditingController jenis = TextEditingController(
-      text: existing?['jenis'] ?? '',
-    );
+    String jenis = existing?['jenis'] ?? 'Makanan';
     final TextEditingController harga = TextEditingController(
       text: existing?['harga']?.toString() ?? '',
     );
-    final TextEditingController stok = TextEditingController(
-      text: existing?['stok'] ?? '',
-    );
+    String stok = existing?['stok'] ?? 'Ada';
+    String? gambarUrl = existing?['gambar_url'];
+    XFile? pickedWebImage;
+    Uint8List? pickedWebImageBytes;
+    File? pickedImage;
+    bool uploading = false;
+
+    Future<void> pickImage() async {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked != null) {
+        if (kIsWeb) {
+          pickedWebImage = picked;
+          pickedWebImageBytes = await picked.readAsBytes();
+        } else {
+          pickedImage = File(picked.path);
+        }
+        setState(() {});
+      }
+    }
+
+    Future<String?> uploadImage(dynamic image) async {
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final ref = firebase_storage.FirebaseStorage.instance.ref().child(
+        'produk/$fileName.jpg',
+      );
+      if (kIsWeb && image is XFile) {
+        await ref.putData(
+          await image.readAsBytes(),
+          firebase_storage.SettableMetadata(contentType: 'image/jpeg'),
+        );
+      } else if (image is File) {
+        await ref.putFile(
+          image,
+          firebase_storage.SettableMetadata(contentType: 'image/jpeg'),
+        );
+      }
+      return await ref.getDownloadURL();
+    }
 
     showDialog(
       context: context,
       builder:
-          (ctx) => AlertDialog(
-            title: Text(docId == null ? "Tambah Produk" : "Edit Produk"),
-            content: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: nama,
-                    decoration: const InputDecoration(labelText: 'Nama Produk'),
+          (ctx) => StatefulBuilder(
+            builder:
+                (ctx, setStateDialog) => AlertDialog(
+                  title: Text(docId == null ? "Tambah Produk" : "Edit Produk"),
+                  content: Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              await pickImage();
+                              setStateDialog(() {});
+                            },
+                            child:
+                                kIsWeb
+                                    ? (pickedWebImageBytes != null
+                                        ? Image.memory(
+                                          pickedWebImageBytes!,
+                                          height: 100,
+                                        )
+                                        : gambarUrl != null
+                                        ? Image.network(gambarUrl, height: 100)
+                                        : Container(
+                                          height: 100,
+                                          color: Colors.grey[300],
+                                          child: const Center(
+                                            child: Text('Pilih Gambar (web)'),
+                                          ),
+                                        ))
+                                    : (pickedImage != null
+                                        ? Image.file(pickedImage!, height: 100)
+                                        : gambarUrl != null
+                                        ? Image.network(gambarUrl, height: 100)
+                                        : Container(
+                                          height: 100,
+                                          color: Colors.grey[300],
+                                          child: const Center(
+                                            child: Text('Pilih Gambar'),
+                                          ),
+                                        )),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: nama,
+                            decoration: const InputDecoration(
+                              labelText: 'Nama Produk',
+                            ),
+                          ),
+                          DropdownButtonFormField<String>(
+                            value: jenis,
+                            decoration: const InputDecoration(
+                              labelText: 'Jenis',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Makanan',
+                                child: Text('Makanan'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Minuman',
+                                child: Text('Minuman'),
+                              ),
+                            ],
+                            onChanged:
+                                (val) => setStateDialog(() => jenis = val!),
+                          ),
+                          TextFormField(
+                            controller: harga,
+                            decoration: const InputDecoration(
+                              labelText: 'Harga',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                          DropdownButtonFormField<String>(
+                            value: stok,
+                            decoration: const InputDecoration(
+                              labelText: 'Status Stok',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Ada',
+                                child: Text('Ada'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Habis',
+                                child: Text('Habis'),
+                              ),
+                            ],
+                            onChanged:
+                                (val) => setStateDialog(() => stok = val!),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  TextFormField(
-                    controller: jenis,
-                    decoration: const InputDecoration(labelText: 'Jenis'),
-                  ),
-                  TextFormField(
-                    controller: harga,
-                    decoration: const InputDecoration(labelText: 'Harga'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextFormField(
-                    controller: stok,
-                    decoration: const InputDecoration(labelText: 'Status Stok'),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text("Batal"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final data = {
-                    'nama': nama.text,
-                    'jenis': jenis.text,
-                    'harga': int.tryParse(harga.text) ?? 0,
-                    'stok': stok.text,
-                    'createdAt': FieldValue.serverTimestamp(),
-                  };
-                  if (docId == null) {
-                    await FirebaseFirestore.instance
-                        .collection('produk')
-                        .add(data);
-                  } else {
-                    await FirebaseFirestore.instance
-                        .collection('produk')
-                        .doc(docId)
-                        .update(data);
-                  }
-                  Navigator.pop(ctx);
-                },
-                child: const Text("Simpan"),
-              ),
-            ],
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text("Batal"),
+                    ),
+                    ElevatedButton(
+                      onPressed:
+                          uploading
+                              ? null
+                              : () async {
+                                setStateDialog(() => uploading = true);
+                                String? url = gambarUrl;
+                                if (kIsWeb && pickedWebImage != null) {
+                                  url = await uploadImage(pickedWebImage);
+                                } else if (!kIsWeb && pickedImage != null) {
+                                  url = await uploadImage(pickedImage!);
+                                }
+                                final data = {
+                                  'nama': nama.text,
+                                  'jenis': jenis,
+                                  'harga': int.tryParse(harga.text) ?? 0,
+                                  'stok': stok,
+                                  'gambar_url': url,
+                                  'createdAt': FieldValue.serverTimestamp(),
+                                };
+                                if (docId == null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('produk')
+                                      .add(data);
+                                } else {
+                                  await FirebaseFirestore.instance
+                                      .collection('produk')
+                                      .doc(docId)
+                                      .update(data);
+                                }
+                                setStateDialog(() => uploading = false);
+                                Navigator.pop(ctx);
+                              },
+                      child:
+                          uploading
+                              ? const CircularProgressIndicator()
+                              : const Text("Simpan"),
+                    ),
+                  ],
+                ),
           ),
     );
   }

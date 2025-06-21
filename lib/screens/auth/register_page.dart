@@ -75,7 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 24),
                 if (error.isNotEmpty)
                   Text(error, style: const TextStyle(color: Colors.red)),
-                ElevatedButton(
+                ElevatedButton( 
                   onPressed: register,
                   child:
                       loading
