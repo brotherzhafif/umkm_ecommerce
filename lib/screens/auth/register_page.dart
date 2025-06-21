@@ -31,7 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
           .set({'email': emailController.text, 'role': selectedRole});
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/');
     } catch (e) {
       setState(() => error = 'Gagal daftar: ${e.toString()}');
     } finally {
@@ -75,7 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 24),
                 if (error.isNotEmpty)
                   Text(error, style: const TextStyle(color: Colors.red)),
-                ElevatedButton( 
+                ElevatedButton(
                   onPressed: register,
                   child:
                       loading
@@ -84,8 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed:
-                      () => Navigator.pushReplacementNamed(context, '/login'),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/'),
                   child: const Text("Sudah punya akun? Login di sini"),
                 ),
               ],

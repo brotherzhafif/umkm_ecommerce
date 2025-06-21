@@ -62,8 +62,38 @@ class _CustomerHomeState extends State<CustomerHome> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child: Container(color: Colors.grey[200]),
-                                ), // Placeholder gambar
+                                  child:
+                                      data['gambar_url'] != null &&
+                                              data['gambar_url'] != ''
+                                          ? Image.network(
+                                            data['gambar_url'],
+                                            height: 80,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Container(
+                                                      height: 80,
+                                                      width: double.infinity,
+                                                      color: Colors.grey[300],
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons.broken_image,
+                                                        ),
+                                                      ),
+                                                    ),
+                                          )
+                                          : Container(
+                                            height: 80,
+                                            width: double.infinity,
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.image_not_supported,
+                                              ),
+                                            ),
+                                          ),
+                                ),
                                 Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: Column(

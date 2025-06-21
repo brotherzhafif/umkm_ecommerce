@@ -109,6 +109,18 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
                                       height: 80,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                                height: 80,
+                                                width: double.infinity,
+                                                color: Colors.grey[300],
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                  ),
+                                                ),
+                                              ),
                                     )
                                   else
                                     Container(
