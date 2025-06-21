@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dashboard_page.dart';
 import 'menu_produk_page.dart';
 import 'data_pesanan_page.dart';
@@ -21,7 +22,30 @@ class _AdminHomeState extends State<AdminHome> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Lock orientation to landscape when entering admin panel
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    // Restore orientation to allow all when leaving admin panel
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 900;
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -43,6 +67,39 @@ class _AdminHomeState extends State<AdminHome> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await showDialog(
+                context: context,
+                builder:
+                    (ctx) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Yakin ingin logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Batal'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/',
+                              (route) => false,
+                            );
+                          },
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+              );
+            },
+          ),
+        ],
       ),
       drawer: DrawerAdmin(
         selectedIndex: selectedIndex,
@@ -51,30 +108,37 @@ class _AdminHomeState extends State<AdminHome> {
           Navigator.pop(context);
         },
       ),
-      body: Row(
-        children: [
-          if (MediaQuery.of(context).size.width >= 900)
-            Container(
-              width: 220,
-              color: Colors.lightBlue,
-              child: Column(
+      body:
+          isWide
+              ? Row(
                 children: [
-                  const SizedBox(height: 32),
-                  _SidebarMenu(
-                    selectedIndex: selectedIndex,
-                    onTap: (i) => setState(() => selectedIndex = i),
+                  Container(
+                    width: 220,
+                    color: Colors.lightBlue,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 32),
+                        _SidebarMenu(
+                          selectedIndex: selectedIndex,
+                          onTap: (i) => setState(() => selectedIndex = i),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      color: Colors.grey[100],
+                      child: pages[selectedIndex],
+                    ),
                   ),
                 ],
+              )
+              : Container(
+                color: Colors.grey[100],
+                width: double.infinity,
+                height: double.infinity,
+                child: pages[selectedIndex],
               ),
-            ),
-          Expanded(
-            child: Container(
-              color: Colors.grey[100],
-              child: pages[selectedIndex],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

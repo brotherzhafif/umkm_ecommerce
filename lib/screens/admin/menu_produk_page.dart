@@ -21,10 +21,9 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -83,102 +82,71 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
               ],
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream:
-                        FirebaseFirestore.instance
-                            .collection('produk')
-                            .orderBy('createdAt', descending: true)
-                            .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return const Center(child: Text('Terjadi kesalahan'));
-                      }
-                      final docs = snapshot.data?.docs ?? [];
-                      final filteredDocs =
-                          docs.where((doc) {
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection('produk')
+                          .orderBy('createdAt', descending: true)
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(child: Text('Terjadi kesalahan'));
+                    }
+                    final docs = snapshot.data?.docs ?? [];
+                    final filteredDocs =
+                        docs.where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final name =
+                              (data['nama'] ?? '').toString().toLowerCase();
+                          final jenis = data['jenis'] ?? '';
+                          final matchesCategory =
+                              selectedCategory == 'Semua' ||
+                              jenis == selectedCategory;
+                          final matchesSearch =
+                              searchKeyword.isEmpty ||
+                              name.contains(searchKeyword.toLowerCase());
+                          return matchesCategory && matchesSearch;
+                        }).toList();
+                    return GridView.count(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children:
+                          filteredDocs.map((doc) {
                             final data = doc.data() as Map<String, dynamic>;
-                            final name =
-                                (data['nama'] ?? '').toString().toLowerCase();
-                            final jenis = data['jenis'] ?? '';
-                            final matchesCategory =
-                                selectedCategory == 'Semua' ||
-                                jenis == selectedCategory;
-                            final matchesSearch =
-                                searchKeyword.isEmpty ||
-                                name.contains(searchKeyword.toLowerCase());
-                            return matchesCategory && matchesSearch;
-                          }).toList();
-                      return GridView.count(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        children:
-                            filteredDocs.map((doc) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              return ProductCard(
-                                nama: data['nama'] ?? '-',
-                                jenis: data['jenis'] ?? '-',
-                                harga: data['harga'] ?? 0,
-                                stok: data['stok'] ?? '-',
-                                gambarUrl: data['gambar_url'],
-                                onEdit: () => _showForm(context, doc.id, data),
-                                onDelete: () async {
-                                  await FirebaseFirestore.instance
-                                      .collection('produk')
-                                      .doc(doc.id)
-                                      .delete();
-                                },
-                              );
-                            }).toList(),
-                      );
-                    },
-                  ),
+                            return ProductCard(
+                              nama: data['nama'] ?? '-',
+                              jenis: data['jenis'] ?? '-',
+                              harga: data['harga'] ?? 0,
+                              stok: data['stok'] ?? '-',
+                              gambarUrl: data['gambar_url'],
+                              onEdit: () => _showForm(context, doc.id, data),
+                              onDelete: () async {
+                                await FirebaseFirestore.instance
+                                    .collection('produk')
+                                    .doc(doc.id)
+                                    .delete();
+                              },
+                            );
+                          }).toList(),
+                    );
+                  },
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () {},
-                ),
-                ...List.generate(
-                  3,
-                  (i) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.lightBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      onPressed: () {},
-                      child: Text('${i + 1}'),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () {},
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -241,148 +209,160 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
     showDialog(
       context: context,
       builder:
-          (ctx) => StatefulBuilder(
-            builder:
-                (ctx, setStateDialog) => AlertDialog(
-                  title: Text(docId == null ? "Tambah Produk" : "Edit Produk"),
-                  content: Form(
+          (ctx) => Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
                     key: _formKey,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              await pickImage();
-                              setStateDialog(() {});
-                            },
-                            child:
-                                kIsWeb
-                                    ? (pickedWebImageBytes != null
-                                        ? Image.memory(
-                                          pickedWebImageBytes!,
-                                          height: 100,
-                                        )
-                                        : gambarUrl != null
-                                        ? Image.network(gambarUrl, height: 100)
-                                        : Container(
-                                          height: 100,
-                                          color: Colors.grey[300],
-                                          child: const Center(
-                                            child: Text('Pilih Gambar (web)'),
-                                          ),
-                                        ))
-                                    : (pickedImage != null
-                                        ? Image.file(pickedImage!, height: 100)
-                                        : gambarUrl != null
-                                        ? Image.network(gambarUrl, height: 100)
-                                        : Container(
-                                          height: 100,
-                                          color: Colors.grey[300],
-                                          child: const Center(
-                                            child: Text('Pilih Gambar'),
-                                          ),
-                                        )),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            await pickImage();
+                            (ctx as Element).markNeedsBuild();
+                          },
+                          child:
+                              kIsWeb
+                                  ? (pickedWebImageBytes != null
+                                      ? Image.memory(
+                                        pickedWebImageBytes!,
+                                        height: 100,
+                                      )
+                                      : gambarUrl != null
+                                      ? Image.network(gambarUrl, height: 100)
+                                      : Container(
+                                        height: 100,
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Text('Pilih Gambar (web)'),
+                                        ),
+                                      ))
+                                  : (pickedImage != null
+                                      ? Image.file(pickedImage!, height: 100)
+                                      : gambarUrl != null
+                                      ? Image.network(gambarUrl, height: 100)
+                                      : Container(
+                                        height: 100,
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Text('Pilih Gambar'),
+                                        ),
+                                      )),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: nama,
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Produk',
                           ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: nama,
-                            decoration: const InputDecoration(
-                              labelText: 'Nama Produk',
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: jenis,
+                          decoration: const InputDecoration(labelText: 'Jenis'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Makanan',
+                              child: Text('Makanan'),
                             ),
-                          ),
-                          DropdownButtonFormField<String>(
-                            value: jenis,
-                            decoration: const InputDecoration(
-                              labelText: 'Jenis',
+                            DropdownMenuItem(
+                              value: 'Minuman',
+                              child: Text('Minuman'),
                             ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Makanan',
-                                child: Text('Makanan'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Minuman',
-                                child: Text('Minuman'),
-                              ),
-                            ],
-                            onChanged:
-                                (val) => setStateDialog(() => jenis = val!),
+                          ],
+                          onChanged: (val) => jenis = val!,
+                        ),
+                        TextFormField(
+                          controller: harga,
+                          decoration: const InputDecoration(labelText: 'Harga'),
+                          keyboardType: TextInputType.number,
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: stok,
+                          decoration: const InputDecoration(
+                            labelText: 'Status Stok',
                           ),
-                          TextFormField(
-                            controller: harga,
-                            decoration: const InputDecoration(
-                              labelText: 'Harga',
+                          items: const [
+                            DropdownMenuItem(value: 'Ada', child: Text('Ada')),
+                            DropdownMenuItem(
+                              value: 'Habis',
+                              child: Text('Habis'),
                             ),
-                            keyboardType: TextInputType.number,
-                          ),
-                          DropdownButtonFormField<String>(
-                            value: stok,
-                            decoration: const InputDecoration(
-                              labelText: 'Status Stok',
+                          ],
+                          onChanged: (val) => stok = val!,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text("Batal"),
                             ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Ada',
-                                child: Text('Ada'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Habis',
-                                child: Text('Habis'),
-                              ),
-                            ],
-                            onChanged:
-                                (val) => setStateDialog(() => stok = val!),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed:
+                                  uploading
+                                      ? null
+                                      : () async {
+                                        (ctx as Element).markNeedsBuild();
+                                        String? url = gambarUrl;
+                                        if (kIsWeb && pickedWebImage != null) {
+                                          url = await uploadImage(
+                                            pickedWebImage,
+                                          );
+                                        } else if (!kIsWeb &&
+                                            pickedImage != null) {
+                                          url = await uploadImage(pickedImage!);
+                                        }
+                                        final data = {
+                                          'nama': nama.text,
+                                          'jenis': jenis,
+                                          'harga':
+                                              int.tryParse(harga.text) ?? 0,
+                                          'stok': stok,
+                                          'gambar_url': url,
+                                          'createdAt':
+                                              FieldValue.serverTimestamp(),
+                                        };
+                                        if (docId == null) {
+                                          await FirebaseFirestore.instance
+                                              .collection('produk')
+                                              .add(data);
+                                        } else {
+                                          await FirebaseFirestore.instance
+                                              .collection('produk')
+                                              .doc(docId)
+                                              .update(data);
+                                        }
+                                        Navigator.pop(ctx);
+                                      },
+                              child:
+                                  uploading
+                                      ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Text("Simpan"),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("Batal"),
-                    ),
-                    ElevatedButton(
-                      onPressed:
-                          uploading
-                              ? null
-                              : () async {
-                                setStateDialog(() => uploading = true);
-                                String? url = gambarUrl;
-                                if (kIsWeb && pickedWebImage != null) {
-                                  url = await uploadImage(pickedWebImage);
-                                } else if (!kIsWeb && pickedImage != null) {
-                                  url = await uploadImage(pickedImage!);
-                                }
-                                final data = {
-                                  'nama': nama.text,
-                                  'jenis': jenis,
-                                  'harga': int.tryParse(harga.text) ?? 0,
-                                  'stok': stok,
-                                  'gambar_url': url,
-                                  'createdAt': FieldValue.serverTimestamp(),
-                                };
-                                if (docId == null) {
-                                  await FirebaseFirestore.instance
-                                      .collection('produk')
-                                      .add(data);
-                                } else {
-                                  await FirebaseFirestore.instance
-                                      .collection('produk')
-                                      .doc(docId)
-                                      .update(data);
-                                }
-                                setStateDialog(() => uploading = false);
-                                Navigator.pop(ctx);
-                              },
-                      child:
-                          uploading
-                              ? const CircularProgressIndicator()
-                              : const Text("Simpan"),
-                    ),
-                  ],
                 ),
+              ),
+            ),
           ),
     );
   }
