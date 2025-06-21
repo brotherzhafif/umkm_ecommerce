@@ -20,11 +20,20 @@ class _AdminHomeState extends State<AdminHome> {
     MenuProdukPage(),
     DataPesananPage(),
   ];
-
   @override
   void initState() {
     super.initState();
     // Lock orientation to landscape when entering admin panel
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This ensures that landscape mode is enforced even if the user tries to rotate
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,

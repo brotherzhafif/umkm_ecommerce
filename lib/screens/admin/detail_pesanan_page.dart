@@ -3,9 +3,71 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/order_table_item.dart';
 
-class DetailPesananPage extends StatelessWidget {
+class DetailPesananPage extends StatefulWidget {
   final String pesananId;
   const DetailPesananPage({super.key, required this.pesananId});
+
+  @override
+  State<DetailPesananPage> createState() => _DetailPesananPageState();
+}
+
+class _DetailPesananPageState extends State<DetailPesananPage> {
+  String? _selectedStatus;
+  bool _isUpdating = false;
+
+  Future<void> _updateStatus() async {
+    if (_selectedStatus == null) return;
+
+    setState(() => _isUpdating = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('pesanan')
+          .doc(widget.pesananId)
+          .update({'status': _selectedStatus});
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status pesanan diperbarui ke $_selectedStatus'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _validatePayment() async {
+    setState(() => _isUpdating = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('pesanan')
+          .doc(widget.pesananId)
+          .update({
+            'status': 'Diproses',
+            'pembayaran_divalidasi': true,
+            'waktu_validasi': FieldValue.serverTimestamp(),
+          });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pembayaran telah divalidasi')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      setState(() => _isUpdating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,124 +116,345 @@ class DetailPesananPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: Padding(
               padding: const EdgeInsets.all(32),
-              child: FutureBuilder<DocumentSnapshot>(
-                future:
+              child: StreamBuilder<DocumentSnapshot>(
+                stream:
                     FirebaseFirestore.instance
                         .collection('pesanan')
-                        .doc(pesananId)
-                        .get(),
+                        .doc(widget.pesananId)
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final data = snapshot.data!.data() as Map<String, dynamic>;
-                  return Row(
+                  _selectedStatus = data['status'];
+
+                  final tanggal = (data['tanggal'] as Timestamp?)?.toDate();
+                  final formattedDate =
+                      tanggal != null
+                          ? "${tanggal.day}/${tanggal.month}/${tanggal.year} ${tanggal.hour}:${tanggal.minute}"
+                          : "-";
+
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'ID Pesanan: $pesananId',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text('Nama Pelanggan: ${data['pelanggan'] ?? '-'}'),
-                            Text('No Meja: ${data['meja'] ?? '-'}'),
-                            Text('Status: ${data['status'] ?? '-'}'),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Daftar Item Pesanan:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            FutureBuilder<QuerySnapshot>(
-                              future:
-                                  FirebaseFirestore.instance
-                                      .collection('pesanan')
-                                      .doc(pesananId)
-                                      .collection('items')
-                                      .get(),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData) {
-                                  return const CircularProgressIndicator();
-                                }
-                                final items =
-                                    snapshot.data!.docs.map((itemDoc) {
-                                      final item =
-                                          itemDoc.data()
-                                              as Map<String, dynamic>;
-                                      return OrderTableItem(
-                                        nama: item['nama'],
-                                        jumlah: item['jumlah'],
-                                        total: item['total'],
-                                      );
-                                    }).toList();
-                                return Column(children: items);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 32),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Detail Pembayaran',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            FutureBuilder<DocumentSnapshot>(
-                              future:
-                                  FirebaseFirestore.instance
-                                      .collection('pembayaran')
-                                      .doc(data['id_pembayaran'])
-                                      .get(),
-                              builder: (context, snapshot) {
-                                if (!snapshot.hasData) {
-                                  return const Text('Loading...');
-                                }
-                                final bayar =
-                                    snapshot.data!.data()
-                                        as Map<String, dynamic>?;
-                                if (bayar == null)
-                                  return const Text('Belum ada pembayaran');
-                                final itemList =
-                                    bayar['items'] as List<dynamic>?;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ID Pesanan: ${widget.pesananId}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Nama Pelanggan: ${data['pelanggan'] ?? '-'}',
+                                ),
+                                Text('No Meja: ${data['meja'] ?? '-'}'),
+                                Text('Tanggal: $formattedDate'),
+                                const SizedBox(height: 16),
+                                Row(
                                   children: [
-                                    Text(
-                                      'ID Pembayaran: ${data['id_pembayaran'] ?? '-'}',
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (itemList != null)
-                                      Column(
-                                        children:
-                                            itemList.map((item) {
-                                              return OrderTableItem(
-                                                nama: item['nama'],
-                                                jumlah: item['jumlah'],
-                                                total: item['total'],
-                                              );
-                                            }).toList(),
+                                    const Text('Status: '),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
                                       ),
-                                    const Divider(),
-                                    Text(
-                                      'Total Harga Pesanan: Rp ${bayar['total'] ?? 0}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(
+                                          data['status'] ?? '',
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        data['status'] ?? 'Menunggu Konfirmasi',
                                       ),
                                     ),
                                   ],
-                                );
-                              },
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<String>(
+                                        value: _selectedStatus,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Ubah Status',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'Menunggu Konfirmasi',
+                                            child: Text('Menunggu Konfirmasi'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Diproses',
+                                            child: Text('Diproses'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Dikirim',
+                                            child: Text('Dikirim'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Selesai',
+                                            child: Text('Selesai'),
+                                          ),
+                                        ],
+                                        onChanged: (val) {
+                                          setState(() => _selectedStatus = val);
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    ElevatedButton(
+                                      onPressed:
+                                          _isUpdating ? null : _updateStatus,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.lightBlue,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child:
+                                          _isUpdating
+                                              ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                              : const Text('Update'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+                          const SizedBox(width: 32),
+                          if (data['catatan'] != null && data['catatan'] != '')
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Catatan Pelanggan:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    child: Text(data['catatan']),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Daftar Item Pesanan:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      StreamBuilder<QuerySnapshot>(
+                        stream:
+                            FirebaseFirestore.instance
+                                .collection('pesanan')
+                                .doc(widget.pesananId)
+                                .collection('items')
+                                .snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const CircularProgressIndicator();
+                          }
+                          final items = snapshot.data!.docs;
+                          return Card(
+                            elevation: 0,
+                            color: Colors.grey[100],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  ...items.map((itemDoc) {
+                                    final item =
+                                        itemDoc.data() as Map<String, dynamic>;
+                                    return OrderTableItem(
+                                      nama: item['nama'],
+                                      jumlah: item['jumlah'],
+                                      total: item['total'] ?? 0,
+                                    );
+                                  }),
+                                  const Divider(),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Total Harga Pesanan:',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Rp ${data['total'] ?? 0}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Detail Pembayaran',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        elevation: 0,
+                        color: Colors.grey[100],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('ID Pembayaran:'),
+                                  Text(data['id_pembayaran'] ?? '-'),
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Status Validasi:'),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          data['pembayaran_divalidasi'] == true
+                                              ? Colors.green[100]
+                                              : Colors.orange[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      data['pembayaran_divalidasi'] == true
+                                          ? 'Sudah Divalidasi'
+                                          : 'Belum Divalidasi',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (data['bukti_pembayaran_url'] != null)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Bukti Pembayaran:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        data['bukti_pembayaran_url'],
+                                        height: 200,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                                  height: 200,
+                                                  color: Colors.grey[300],
+                                                  child: const Center(
+                                                    child: Icon(
+                                                      Icons.broken_image,
+                                                      size: 40,
+                                                    ),
+                                                  ),
+                                                ),
+                                      ),
+                                    ),
+                                    if (data['pembayaran_divalidasi'] != true)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 16),
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(
+                                              Icons.check_circle,
+                                            ),
+                                            label: const Text(
+                                              'Validasi Pembayaran',
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                  ),
+                                            ),
+                                            onPressed:
+                                                _isUpdating
+                                                    ? null
+                                                    : _validatePayment,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              if (data['bukti_pembayaran_url'] == null)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 16),
+                                  child: Text(
+                                    'Pelanggan belum mengupload bukti pembayaran',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -183,5 +466,20 @@ class DetailPesananPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Selesai':
+        return Colors.green[100]!;
+      case 'Diproses':
+        return Colors.blue[100]!;
+      case 'Dikirim':
+        return Colors.orange[100]!;
+      case 'Menunggu Konfirmasi':
+        return Colors.yellow[100]!;
+      default:
+        return Colors.grey[200]!;
+    }
   }
 }

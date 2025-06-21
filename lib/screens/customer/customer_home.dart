@@ -1,6 +1,7 @@
 // File: lib/screens/customer/customer_home.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomerHome extends StatefulWidget {
   const CustomerHome({super.key});
@@ -11,6 +12,28 @@ class CustomerHome extends StatefulWidget {
 
 class _CustomerHomeState extends State<CustomerHome> {
   final List<Map<String, dynamic>> cart = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Lock orientation to portrait for customer pages
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    // Restore all orientations when leaving
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    super.dispose();
+  }
 
   void addToCart(Map<String, dynamic> item) {
     final index = cart.indexWhere((e) => e['id'] == item['id']);

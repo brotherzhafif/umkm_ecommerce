@@ -158,7 +158,7 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
     String? docId,
     Map<String, dynamic>? existing,
   ]) {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     final TextEditingController nama = TextEditingController(
       text: existing?['nama'] ?? '',
     );
@@ -209,160 +209,242 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
     showDialog(
       context: context,
       builder:
-          (ctx) => Dialog(
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 24,
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            await pickImage();
-                            (ctx as Element).markNeedsBuild();
-                          },
-                          child:
-                              kIsWeb
-                                  ? (pickedWebImageBytes != null
-                                      ? Image.memory(
-                                        pickedWebImageBytes!,
-                                        height: 100,
-                                      )
-                                      : gambarUrl != null
-                                      ? Image.network(gambarUrl, height: 100)
-                                      : Container(
-                                        height: 100,
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: Text('Pilih Gambar (web)'),
-                                        ),
-                                      ))
-                                  : (pickedImage != null
-                                      ? Image.file(pickedImage!, height: 100)
-                                      : gambarUrl != null
-                                      ? Image.network(gambarUrl, height: 100)
-                                      : Container(
-                                        height: 100,
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: Text('Pilih Gambar'),
-                                        ),
-                                      )),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: nama,
-                          decoration: const InputDecoration(
-                            labelText: 'Nama Produk',
+          (ctx) => StatefulBuilder(
+            builder:
+                (builderContext, setStateDialog) => Dialog(
+                  insetPadding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 24,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  await pickImage();
+                                  setStateDialog(() {});
+                                },
+                                child:
+                                    kIsWeb
+                                        ? (pickedWebImageBytes != null
+                                            ? Image.memory(
+                                              pickedWebImageBytes!,
+                                              height: 100,
+                                            )
+                                            : gambarUrl != null
+                                            ? Image.network(
+                                              gambarUrl,
+                                              height: 100,
+                                            )
+                                            : Container(
+                                              height: 100,
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: Text(
+                                                  'Pilih Gambar (web)',
+                                                ),
+                                              ),
+                                            ))
+                                        : (pickedImage != null
+                                            ? Image.file(
+                                              pickedImage!,
+                                              height: 100,
+                                            )
+                                            : gambarUrl != null
+                                            ? Image.network(
+                                              gambarUrl,
+                                              height: 100,
+                                            )
+                                            : Container(
+                                              height: 100,
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: Text('Pilih Gambar'),
+                                              ),
+                                            )),
+                              ),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: nama,
+                                decoration: const InputDecoration(
+                                  labelText: 'Nama Produk',
+                                  hintText: 'Masukkan nama produk',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Nama produk tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: jenis,
+                                decoration: const InputDecoration(
+                                  labelText: 'Jenis',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Makanan',
+                                    child: Text('Makanan'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Minuman',
+                                    child: Text('Minuman'),
+                                  ),
+                                ],
+                                onChanged:
+                                    (val) => setStateDialog(() => jenis = val!),
+                              ),
+                              TextFormField(
+                                controller: harga,
+                                decoration: const InputDecoration(
+                                  labelText: 'Harga',
+                                  hintText: 'Masukkan harga produk',
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Harga tidak boleh kosong';
+                                  }
+                                  if (int.tryParse(value) == null) {
+                                    return 'Harga harus berupa angka';
+                                  }
+                                  if (int.parse(value) <= 0) {
+                                    return 'Harga harus lebih dari 0';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: stok,
+                                decoration: const InputDecoration(
+                                  labelText: 'Status Stok',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Ada',
+                                    child: Text('Ada'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Habis',
+                                    child: Text('Habis'),
+                                  ),
+                                ],
+                                onChanged:
+                                    (val) => setStateDialog(() => stok = val!),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text("Batal"),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed:
+                                        uploading
+                                            ? null
+                                            : () async {
+                                              // Validate the form
+                                              if (!formKey.currentState!
+                                                  .validate()) {
+                                                return;
+                                              }
+
+                                              // Set uploading state
+                                              setStateDialog(
+                                                () => uploading = true,
+                                              );
+
+                                              try {
+                                                String? url = gambarUrl;
+                                                if (kIsWeb &&
+                                                    pickedWebImage != null) {
+                                                  url = await uploadImage(
+                                                    pickedWebImage,
+                                                  );
+                                                } else if (!kIsWeb &&
+                                                    pickedImage != null) {
+                                                  url = await uploadImage(
+                                                    pickedImage,
+                                                  );
+                                                }
+
+                                                final data = {
+                                                  'nama': nama.text,
+                                                  'jenis': jenis,
+                                                  'harga':
+                                                      int.tryParse(
+                                                        harga.text,
+                                                      ) ??
+                                                      0,
+                                                  'stok': stok,
+                                                  'gambar_url': url,
+                                                  'createdAt':
+                                                      FieldValue.serverTimestamp(),
+                                                };
+
+                                                if (docId == null) {
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection('produk')
+                                                      .add(data);
+                                                } else {
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection('produk')
+                                                      .doc(docId)
+                                                      .update(data);
+                                                }
+
+                                                if (context.mounted) {
+                                                  Navigator.pop(ctx);
+                                                }
+                                              } catch (e) {
+                                                setStateDialog(
+                                                  () => uploading = false,
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Error: ${e.toString()}',
+                                                    ),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                    child:
+                                        uploading
+                                            ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                            : const Text("Simpan"),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        DropdownButtonFormField<String>(
-                          value: jenis,
-                          decoration: const InputDecoration(labelText: 'Jenis'),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Makanan',
-                              child: Text('Makanan'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Minuman',
-                              child: Text('Minuman'),
-                            ),
-                          ],
-                          onChanged: (val) => jenis = val!,
-                        ),
-                        TextFormField(
-                          controller: harga,
-                          decoration: const InputDecoration(labelText: 'Harga'),
-                          keyboardType: TextInputType.number,
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: stok,
-                          decoration: const InputDecoration(
-                            labelText: 'Status Stok',
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'Ada', child: Text('Ada')),
-                            DropdownMenuItem(
-                              value: 'Habis',
-                              child: Text('Habis'),
-                            ),
-                          ],
-                          onChanged: (val) => stok = val!,
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text("Batal"),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed:
-                                  uploading
-                                      ? null
-                                      : () async {
-                                        (ctx as Element).markNeedsBuild();
-                                        String? url = gambarUrl;
-                                        if (kIsWeb && pickedWebImage != null) {
-                                          url = await uploadImage(
-                                            pickedWebImage,
-                                          );
-                                        } else if (!kIsWeb &&
-                                            pickedImage != null) {
-                                          url = await uploadImage(pickedImage!);
-                                        }
-                                        final data = {
-                                          'nama': nama.text,
-                                          'jenis': jenis,
-                                          'harga':
-                                              int.tryParse(harga.text) ?? 0,
-                                          'stok': stok,
-                                          'gambar_url': url,
-                                          'createdAt':
-                                              FieldValue.serverTimestamp(),
-                                        };
-                                        if (docId == null) {
-                                          await FirebaseFirestore.instance
-                                              .collection('produk')
-                                              .add(data);
-                                        } else {
-                                          await FirebaseFirestore.instance
-                                              .collection('produk')
-                                              .doc(docId)
-                                              .update(data);
-                                        }
-                                        Navigator.pop(ctx);
-                                      },
-                              child:
-                                  uploading
-                                      ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                      : const Text("Simpan"),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
           ),
     );
   }

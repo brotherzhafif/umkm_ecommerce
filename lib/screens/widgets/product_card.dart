@@ -31,10 +31,10 @@ class ProductCard extends StatelessWidget {
           ),
           elevation: 2,
           child: Container(
-            constraints: const BoxConstraints(minHeight: 1000),
             padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -94,23 +94,35 @@ class ProductCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit,
-                        size: 18,
-                        color: Colors.orange,
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.edit,
+                          size: 16,
+                          color: Colors.orange,
+                        ),
+                        tooltip: 'Edit produk',
+                        onPressed: onEdit,
                       ),
-                      tooltip: 'Edit produk',
-                      onPressed: onEdit,
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete,
-                        size: 18,
-                        color: Colors.red,
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 16,
+                          color: Colors.red,
+                        ),
+                        tooltip: 'Hapus produk',
+                        onPressed: onDelete,
                       ),
-                      tooltip: 'Hapus produk',
-                      onPressed: onDelete,
                     ),
                   ],
                 ),
