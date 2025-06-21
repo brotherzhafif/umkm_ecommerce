@@ -30,14 +30,112 @@ class _CustomerHomeState extends State<CustomerHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pelanggan')),
+      appBar: AppBar(
+        backgroundColor: Colors.lightBlue,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.lightBlue[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.asset('assets/icon.png', fit: BoxFit.cover),
+            ),
+            const SizedBox(width: 16),
+            const Text(
+              "Pelanggan",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.lightBlue),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.asset('assets/icon.png', fit: BoxFit.cover),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'UMKM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.lightBlue),
+              title: const Text('Menu Produk'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long, color: Colors.lightBlue),
+              title: const Text('Pesanan Saya'),
+              onTap: () => Navigator.pop(context),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await showDialog(
+                  context: context,
+                  builder:
+                      (ctx) => AlertDialog(
+                        title: const Text('Logout'),
+                        content: const Text('Yakin ingin logout?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Batal'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                            },
+                            child: const Text('Logout'),
+                          ),
+                        ],
+                      ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Daftar Menu", style: TextStyle(fontSize: 20)),
-            const SizedBox(height: 12),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream:
@@ -52,12 +150,16 @@ class _CustomerHomeState extends State<CustomerHome> {
                   final docs = snapshot.data!.docs;
                   return GridView.count(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
                     children:
                         docs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           return Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -65,27 +167,31 @@ class _CustomerHomeState extends State<CustomerHome> {
                                   child:
                                       data['gambar_url'] != null &&
                                               data['gambar_url'] != ''
-                                          ? Image.network(
-                                            data['gambar_url'],
-                                            height: 80,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    Container(
-                                                      height: 80,
-                                                      width: double.infinity,
-                                                      color: Colors.grey[300],
-                                                      child: const Center(
-                                                        child: Icon(
-                                                          Icons.broken_image,
-                                                        ),
+                                          ? ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                  top: Radius.circular(16),
+                                                ),
+                                            child: Image.network(
+                                              data['gambar_url'],
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => Container(
+                                                    color: Colors.grey[300],
+                                                    child: const Center(
+                                                      child: Icon(
+                                                        Icons.broken_image,
                                                       ),
                                                     ),
+                                                  ),
+                                            ),
                                           )
                                           : Container(
-                                            height: 80,
-                                            width: double.infinity,
                                             color: Colors.grey[300],
                                             child: const Center(
                                               child: Icon(
@@ -95,7 +201,7 @@ class _CustomerHomeState extends State<CustomerHome> {
                                           ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(12),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -106,16 +212,28 @@ class _CustomerHomeState extends State<CustomerHome> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      Text("Rp ${data['harga'] ?? 0}"),
+                                      Text('Rp ${data['harga'] ?? 0}'),
                                       const SizedBox(height: 4),
-                                      ElevatedButton(
-                                        onPressed:
-                                            () => addToCart({
-                                              'id': doc.id,
-                                              'nama': data['nama'],
-                                              'harga': data['harga'],
-                                            }),
-                                        child: const Text("Order"),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.lightBlue,
+                                            foregroundColor: Colors.white,
+                                            shape: const CircleBorder(),
+                                            padding: const EdgeInsets.all(12),
+                                            elevation: 0,
+                                          ),
+                                          onPressed:
+                                              () => addToCart({
+                                                'id': doc.id,
+                                                'nama': data['nama'],
+                                                'harga': data['harga'],
+                                              }),
+                                          child: const Icon(
+                                            Icons.add_shopping_cart,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -129,54 +247,80 @@ class _CustomerHomeState extends State<CustomerHome> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Detail Pesanan", style: TextStyle(fontSize: 20)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                children: [
-                  ...cart.map(
-                    (item) => Row(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Detail Pesanan",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ...cart.map(
+                      (item) => Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "${item['nama']} x${item['jumlah']}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            "Rp ${item['jumlah'] * item['harga']}",
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("${item['nama']} x${item['jumlah']}"),
-                        Text("Rp ${item['jumlah'] * item['harga']}"),
+                        const Text(
+                          "Total Harga Pesanan:",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          "Rp ${getTotal()}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
-                  ),
-                  const Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Total Harga Pesanan:",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed:
+                            cart.isEmpty
+                                ? null
+                                : () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/order',
+                                    arguments: cart,
+                                  );
+                                },
+                        child: const Text(
+                          "Bayar Sekarang",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      Text(
-                        "Rp ${getTotal()}",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed:
-                        cart.isEmpty
-                            ? null
-                            : () {
-                              Navigator.pushNamed(
-                                context,
-                                '/order',
-                                arguments: cart,
-                              );
-                            },
-                    child: const Text("Bayar Sekarang"),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

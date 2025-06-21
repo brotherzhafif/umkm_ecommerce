@@ -8,107 +8,203 @@ class DataPesananPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[200],
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Data Pesanan", style: TextStyle(fontSize: 24)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('pesanan')
-                        .orderBy('tanggal', descending: true)
-                        .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data!.docs;
-
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('ID Pesanan')),
-                        DataColumn(label: Text('No Meja')),
-                        DataColumn(label: Text('Pelanggan')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Tanggal')),
-                        DataColumn(label: Text('Total Harga')),
-                        DataColumn(label: Text('ID Pembayaran')),
-                        DataColumn(label: Text('Aksi')),
-                      ],
-                      rows:
-                          docs.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            return DataRow(
-                              cells: [
-                                DataCell(Text(doc.id)),
-                                DataCell(Text(data['meja'] ?? '-')),
-                                DataCell(Text(data['pelanggan'] ?? '-')),
-                                DataCell(
-                                  _buildStatusDropdown(doc.id, data['status']),
-                                ),
-                                DataCell(
-                                  Text(
-                                    data['tanggal']?.toDate().toString().split(
-                                          ' ',
-                                        )[0] ??
-                                        '-',
-                                  ),
-                                ),
-                                DataCell(Text('Rp ${data['total'] ?? 0}')),
-                                DataCell(Text(data['id_pembayaran'] ?? '-')),
-                                DataCell(
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/detail-pesanan',
-                                        arguments: doc.id,
-                                      );
-                                    },
-                                    child: const Text("Detail"),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+        padding: const EdgeInsets.all(24),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Data Pesanan",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  );
-                },
-              ),
+                    Row(
+                      children: [
+                        DropdownButton<int>(
+                          value: 10,
+                          items: const [
+                            DropdownMenuItem(value: 10, child: Text('10')),
+                            DropdownMenuItem(value: 25, child: Text('25')),
+                            DropdownMenuItem(value: 50, child: Text('50')),
+                          ],
+                          onChanged: (v) {},
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 200,
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'Cari...',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream:
+                        FirebaseFirestore.instance
+                            .collection('pesanan')
+                            .orderBy('tanggal', descending: true)
+                            .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final docs = snapshot.data!.docs;
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('ID Pesanan')),
+                            DataColumn(label: Text('No Meja')),
+                            DataColumn(label: Text('Pelanggan')),
+                            DataColumn(label: Text('Status')),
+                            DataColumn(label: Text('Tanggal')),
+                            DataColumn(label: Text('Total Harga')),
+                            DataColumn(label: Text('ID Pembayaran')),
+                            DataColumn(label: Text('Aksi')),
+                          ],
+                          rows:
+                              docs.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                Color statusColor;
+                                switch (data['status']) {
+                                  case 'Selesai Pembayaran':
+                                    statusColor = Colors.green[200]!;
+                                    break;
+                                  case 'Sedang Diproses':
+                                    statusColor = Colors.blue[200]!;
+                                    break;
+                                  case 'Menunggu Pembayaran':
+                                    statusColor = Colors.yellow[200]!;
+                                    break;
+                                  default:
+                                    statusColor = Colors.grey[200]!;
+                                }
+                                return DataRow(
+                                  cells: [
+                                    DataCell(Text(doc.id)),
+                                    DataCell(Text(data['meja'] ?? '-')),
+                                    DataCell(Text(data['pelanggan'] ?? '-')),
+                                    DataCell(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(data['status'] ?? '-'),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        data['tanggal']
+                                                ?.toDate()
+                                                .toString()
+                                                .split(' ')[0] ??
+                                            '-',
+                                      ),
+                                    ),
+                                    DataCell(Text('Rp ${data['total'] ?? 0}')),
+                                    DataCell(
+                                      Text(data['id_pembayaran'] ?? '-'),
+                                    ),
+                                    DataCell(
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.lightBlue,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/detail-pesanan',
+                                            arguments: doc.id,
+                                          );
+                                        },
+                                        child: const Text("Detail"),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Image.asset(
+                        'assets/icon.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                      onPressed: () {},
+                    ),
+                    ...List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.lightBlue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () {},
+                          child: Text('${i + 1}'),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Image.asset(
+                        'assets/icon.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusDropdown(String docId, String currentStatus) {
-    final statuses = [
-      'Selesai Pembayaran',
-      'Sedang Diproses',
-      'Menunggu Pembayaran',
-    ];
-
-    return DropdownButton<String>(
-      value: currentStatus,
-      onChanged: (val) {
-        if (val != null) {
-          FirebaseFirestore.instance.collection('pesanan').doc(docId).update({
-            'status': val,
-          });
-        }
-      },
-      items:
-          statuses.map((s) {
-            return DropdownMenuItem(value: s, child: Text(s));
-          }).toList(),
     );
   }
 }

@@ -65,44 +65,144 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Konfirmasi Pesanan")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child:
-            loading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: namaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Pelanggan',
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        backgroundColor: Colors.lightBlue,
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.lightBlue[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.asset('assets/icon.png'),
+            ),
+            const SizedBox(width: 16),
+            const Text(
+              "Konfirmasi Pesanan",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.lightBlue),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.asset('assets/icon.png'),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'UMKM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.lightBlue),
+              title: const Text('Menu Produk'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long, color: Colors.lightBlue),
+              title: const Text('Pesanan Saya'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: namaController,
+                    decoration: InputDecoration(
+                      labelText: 'Nama Pelanggan',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        borderSide: const BorderSide(color: Colors.black),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: mejaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nomor Meja',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: mejaController,
+                    decoration: InputDecoration(
+                      labelText: 'Nomor Meja',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        borderSide: const BorderSide(color: Colors.black),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Ringkasan Pesanan",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Ringkasan Pesanan",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    color: Colors.grey[100],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ListView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
                         children: [
                           ...widget.cart.map(
-                            (item) => Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("${item['nama']} x${item['jumlah']}"),
-                                Text("Rp ${item['jumlah'] * item['harga']}"),
-                              ],
+                            (item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${item['nama']} x${item['jumlah']}",
+                                    style: const TextStyle(fontSize: 15),
+                                  ),
+                                  Text(
+                                    "Rp ${item['jumlah'] * item['harga']}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const Divider(),
@@ -124,16 +224,35 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: submitOrder,
-                        child: const Text("Bayar Sekarang"),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
                       ),
+                      onPressed: loading ? null : submitOrder,
+                      child:
+                          loading
+                              ? const CircularProgressIndicator()
+                              : const Text(
+                                "Bayar Sekarang",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

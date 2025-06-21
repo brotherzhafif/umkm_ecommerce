@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../widgets/product_card.dart'; // Ganti dengan path yang sesuai
 
 class MenuProdukPage extends StatefulWidget {
   const MenuProdukPage({super.key});
@@ -21,6 +22,7 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[200],
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -29,150 +31,153 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Menu Produk", style: TextStyle(fontSize: 24)),
-                ElevatedButton.icon(
-                  onPressed: () => _showForm(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text("Tambahkan Item"),
+                const Text(
+                  "Menu Produk",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                DropdownButton<String>(
-                  value: selectedCategory,
-                  items:
-                      kategori.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                  onChanged: (val) => setState(() => selectedCategory = val!),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Cari nama produk...',
-                      border: OutlineInputBorder(),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _showForm(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text("Tambah Item"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        elevation: 0,
+                      ),
                     ),
-                    onChanged: (val) => setState(() => searchKeyword = val),
-                  ),
+                    const SizedBox(width: 16),
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      items:
+                          kategori.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (val) => setState(() => selectedCategory = val!),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 200,
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Cari nama produk...',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (val) => setState(() => searchKeyword = val),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('produk')
-                        .orderBy('createdAt', descending: true)
-                        .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final items =
-                      snapshot.data!.docs.where((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        final name = data['nama']?.toLowerCase() ?? '';
-                        final jenis = data['jenis'] ?? '';
-                        final matchesCategory =
-                            selectedCategory == 'Semua' ||
-                            jenis == selectedCategory;
-                        final matchesSearch =
-                            searchKeyword.isEmpty ||
-                            name.contains(searchKeyword.toLowerCase());
-                        return matchesCategory && matchesSearch;
-                      }).toList();
-
-                  return GridView.count(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    children:
-                        items.map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (data['gambar_url'] != null &&
-                                      data['gambar_url'] != '')
-                                    Image.network(
-                                      data['gambar_url'],
-                                      height: 80,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                                height: 80,
-                                                width: double.infinity,
-                                                color: Colors.grey[300],
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.broken_image,
-                                                  ),
-                                                ),
-                                              ),
-                                    )
-                                  else
-                                    Container(
-                                      height: 80,
-                                      width: double.infinity,
-                                      color: Colors.grey[300],
-                                      child: const Center(
-                                        child: Icon(Icons.image_not_supported),
-                                      ),
-                                    ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    data['nama'] ?? '-',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text('Jenis: ${data['jenis'] ?? '-'}'),
-                                  Text('Harga: Rp ${data['harga'] ?? 0}'),
-                                  Text('Stok: ${data['stok'] ?? '-'}'),
-                                  const Spacer(),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed:
-                                            () => _showForm(
-                                              context,
-                                              doc.id,
-                                              data,
-                                            ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete),
-                                        onPressed: () async {
-                                          await FirebaseFirestore.instance
-                                              .collection('produk')
-                                              .doc(doc.id)
-                                              .delete();
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  );
-                },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream:
+                        FirebaseFirestore.instance
+                            .collection('produk')
+                            .orderBy('createdAt', descending: true)
+                            .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return const Center(child: Text('Terjadi kesalahan'));
+                      }
+                      final docs = snapshot.data?.docs ?? [];
+                      final filteredDocs =
+                          docs.where((doc) {
+                            final data = doc.data() as Map<String, dynamic>;
+                            final name =
+                                (data['nama'] ?? '').toString().toLowerCase();
+                            final jenis = data['jenis'] ?? '';
+                            final matchesCategory =
+                                selectedCategory == 'Semua' ||
+                                jenis == selectedCategory;
+                            final matchesSearch =
+                                searchKeyword.isEmpty ||
+                                name.contains(searchKeyword.toLowerCase());
+                            return matchesCategory && matchesSearch;
+                          }).toList();
+                      return GridView.count(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        children:
+                            filteredDocs.map((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              return ProductCard(
+                                nama: data['nama'] ?? '-',
+                                jenis: data['jenis'] ?? '-',
+                                harga: data['harga'] ?? 0,
+                                stok: data['stok'] ?? '-',
+                                gambarUrl: data['gambar_url'],
+                                onEdit: () => _showForm(context, doc.id, data),
+                                onDelete: () async {
+                                  await FirebaseFirestore.instance
+                                      .collection('produk')
+                                      .doc(doc.id)
+                                      .delete();
+                                },
+                              );
+                            }).toList(),
+                      );
+                    },
+                  ),
+                ),
               ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () {},
+                ),
+                ...List.generate(
+                  3,
+                  (i) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.lightBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () {},
+                      child: Text('${i + 1}'),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () {},
+                ),
+              ],
             ),
           ],
         ),
