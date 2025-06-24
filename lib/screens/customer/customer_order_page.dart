@@ -51,12 +51,22 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70, // Optimize image quality
+    );
 
     if (pickedFile != null) {
       setState(() {
         _buktiPembayaran = File(pickedFile.path);
       });
+
+      // Show confirmation snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gambar berhasil dipilih')),
+        );
+      }
     }
   }
 
@@ -64,18 +74,33 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
     if (_buktiPembayaran == null) return null;
 
     try {
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${namaController.text.replaceAll(' ', '_')}';
       final storageRef = FirebaseStorage.instance
           .ref()
           .child('bukti_pembayaran')
-          .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+          .child('$fileName.jpg');
 
       final uploadTask = storageRef.putFile(_buktiPembayaran!);
+
+      // Monitor upload progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+        // You could update a progress indicator here if desired
+        print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
+      });
+
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
       return downloadUrl;
     } catch (e) {
       print('Error uploading image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: ${e.toString()}')),
+        );
+      }
       return null;
     }
   }
@@ -94,53 +119,90 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
     // Upload bukti pembayaran jika ada
     if (_buktiPembayaran != null) {
       _uploadedImageUrl = await _uploadImage();
+      if (_uploadedImageUrl == null) {
+        setState(() => loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mengupload bukti pembayaran')),
+        );
+        return;
+      }
     }
 
     final total = getTotal();
     final now = DateTime.now();
+    String orderId = '';
 
-    final pesananRef = await FirebaseFirestore.instance
-        .collection('pesanan')
-        .add({
-          'pelanggan': namaController.text,
-          'meja': mejaController.text,
-          'catatan': catatanController.text,
-          'status': 'Menunggu Konfirmasi',
-          'total': total,
-          'tanggal': now,
-          'bukti_pembayaran_url': _uploadedImageUrl,
+    try {
+      // Create order document
+      final pesananRef = await FirebaseFirestore.instance
+          .collection('pesanan')
+          .add({
+            'pelanggan': namaController.text,
+            'meja': mejaController.text,
+            'catatan': catatanController.text,
+            'status':
+                _uploadedImageUrl != null
+                    ? 'Menunggu Konfirmasi'
+                    : 'Belum Dibayar',
+            'total': total,
+            'tanggal': now,
+            'bukti_pembayaran_url': _uploadedImageUrl,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      orderId = pesananRef.id;
+
+      // Add order items to subcollection
+      for (var item in widget.cart) {
+        await pesananRef.collection('items').add({
+          'nama': item['nama'],
+          'jumlah': item['jumlah'],
+          'total': item['jumlah'] * item['harga'],
         });
+      }
 
-    for (var item in widget.cart) {
-      await pesananRef.collection('items').add({
-        'nama': item['nama'],
-        'jumlah': item['jumlah'],
-        'total': item['jumlah'] * item['harga'],
-      });
+      // Create payment record if proof was uploaded
+      if (_uploadedImageUrl != null) {
+        final paymentRef = await FirebaseFirestore.instance
+            .collection('pembayaran')
+            .doc(pesananRef.id)
+            .set({
+              'id_pesanan': pesananRef.id,
+              'items':
+                  widget.cart
+                      .map(
+                        (item) => {
+                          'nama': item['nama'],
+                          'jumlah': item['jumlah'],
+                          'harga': item['harga'],
+                          'total': item['jumlah'] * item['harga'],
+                        },
+                      )
+                      .toList(),
+              'total': total,
+              'waktu_pembayaran': now,
+              'bukti_pembayaran_url': _uploadedImageUrl,
+              'status': 'Menunggu Konfirmasi',
+            });
+
+        await pesananRef.update({'id_pembayaran': pesananRef.id});
+      }
+
+      // Success handling
+      setState(() => loading = false);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibuat')));
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
-
-    await FirebaseFirestore.instance
-        .collection('pembayaran')
-        .doc(pesananRef.id)
-        .set({
-          'id_pesanan': pesananRef.id,
-          'items': widget.cart,
-          'total': total,
-          'waktu_pembayaran': now,
-          'bukti_pembayaran_url': _uploadedImageUrl,
-        });
-
-    await pesananRef.update({'id_pembayaran': pesananRef.id});
-
-    setState(() => loading = false);
-    if (!mounted) return;
-
-    // Tampilkan pesan sukses
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibuat')));
-
-    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -287,7 +349,7 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                     GestureDetector(
                       onTap: _pickImage,
                       child: Container(
-                        height: 150,
+                        height: 200, // Increased height for better visibility
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(16),
@@ -295,28 +357,81 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                         ),
                         child:
                             _buktiPembayaran != null
-                                ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.file(
-                                    _buktiPembayaran!,
-                                    fit: BoxFit.cover,
-                                  ),
+                                ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Image.file(
+                                        _buktiPembayaran!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _buktiPembayaran = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.5,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 )
                                 : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
                                     Icon(
-                                      Icons.image,
-                                      size: 40,
+                                      Icons.upload_file,
+                                      size: 48,
                                       color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      "Tap untuk upload bukti pembayaran",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      "Tap untuk upload bukti pembayaran",
-                                      style: TextStyle(color: Colors.grey),
+                                      "Format: JPG, PNG",
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ],
                                 ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _buktiPembayaran == null
+                          ? "* Pesanan tanpa bukti pembayaran akan berstatus 'Belum Dibayar'"
+                          : "* Bukti pembayaran akan divalidasi oleh admin",
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                     const SizedBox(height: 24),

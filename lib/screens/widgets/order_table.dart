@@ -61,12 +61,18 @@ class OrderTable extends StatelessWidget {
                       child: DropdownButton<String>(
                         value: order['status'],
                         underline: const SizedBox(),
-                        onChanged:
-                            (val) =>
-                                val != null
-                                    ? onStatusChanged(order['id'], val)
-                                    : null,
+                        isDense: true,
+                        icon: const Icon(Icons.arrow_drop_down, size: 18),
+                        onChanged: (val) {
+                          if (val != null) {
+                            onStatusChanged(order['id'], val);
+                          }
+                        },
                         items: const [
+                          DropdownMenuItem(
+                            value: 'Menunggu Konfirmasi',
+                            child: Text('Menunggu Konfirmasi'),
+                          ),
                           DropdownMenuItem(
                             value: 'Selesai Pembayaran',
                             child: Text('Selesai Pembayaran'),
@@ -76,8 +82,8 @@ class OrderTable extends StatelessWidget {
                             child: Text('Sedang Diproses'),
                           ),
                           DropdownMenuItem(
-                            value: 'Menunggu Diproses',
-                            child: Text('Menunggu Diproses'),
+                            value: 'Selesai',
+                            child: Text('Selesai'),
                           ),
                         ],
                       ),

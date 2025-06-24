@@ -335,7 +335,7 @@ class DashboardPage extends StatelessWidget {
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -359,7 +359,7 @@ class DashboardPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 padding: const EdgeInsets.all(12),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 16),
               ),
             ],
           ),

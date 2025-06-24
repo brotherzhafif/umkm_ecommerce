@@ -121,6 +121,8 @@ class _MenuProdukPageState extends State<MenuProdukPage> {
                       crossAxisCount: 3,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
+                      childAspectRatio:
+                          0.7, // Control the height-to-width ratio of grid items
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children:

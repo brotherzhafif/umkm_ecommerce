@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
       initialRoute: '/',
-      routes: appRoutes,
+      routes: appRoutes, // Make sure this line is present and correct
     );
   }
 }

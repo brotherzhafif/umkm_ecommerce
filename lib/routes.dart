@@ -9,6 +9,7 @@ import 'screens/admin/data_pesanan_page.dart';
 import 'screens/admin/detail_pesanan_page.dart';
 import 'screens/customer/customer_home.dart';
 import 'screens/customer/customer_order_page.dart';
+import 'screens/customer/customer_order_history_page.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
   '/': (context) => const LoginPage(),
@@ -28,4 +29,5 @@ final Map<String, WidgetBuilder> appRoutes = {
     final id = ModalRoute.of(context)!.settings.arguments as String;
     return DetailPesananPage(pesananId: id);
   },
+  '/customer-orders': (context) => const CustomerOrderHistoryPage(),
 };

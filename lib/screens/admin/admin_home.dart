@@ -121,19 +121,6 @@ class _AdminHomeState extends State<AdminHome> {
           isWide
               ? Row(
                 children: [
-                  Container(
-                    width: 220,
-                    color: Colors.lightBlue,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 32),
-                        _SidebarMenu(
-                          selectedIndex: selectedIndex,
-                          onTap: (i) => setState(() => selectedIndex = i),
-                        ),
-                      ],
-                    ),
-                  ),
                   Expanded(
                     child: Container(
                       color: Colors.grey[100],
@@ -159,6 +146,8 @@ class _SidebarMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         _SidebarItem(
           icon: Icons.dashboard,

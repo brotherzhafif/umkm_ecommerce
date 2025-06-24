@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/drawer_customer.dart';
 
 class CustomerHome extends StatefulWidget {
   const CustomerHome({super.key});
@@ -112,80 +113,8 @@ class _CustomerHomeState extends State<CustomerHome> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.lightBlue),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.lightBlue[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Image.asset('assets/icon.png', fit: BoxFit.cover),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'UMKM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home, color: Colors.lightBlue),
-              title: const Text('Menu Produk'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt_long, color: Colors.lightBlue),
-              title: const Text('Pesanan Saya'),
-              onTap: () => Navigator.pop(context),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await showDialog(
-                  context: context,
-                  builder:
-                      (ctx) => AlertDialog(
-                        title: const Text('Logout'),
-                        content: const Text('Yakin ingin logout?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Batal'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/',
-                                (route) => false,
-                              );
-                            },
-                            child: const Text('Logout'),
-                          ),
-                        ],
-                      ),
-                );
-              },
-            ),
-          ],
-        ),
+      drawer: DrawerCustomer(
+        selectedIndex: 0, // or the appropriate index for this page
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -208,6 +137,8 @@ class _CustomerHomeState extends State<CustomerHome> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
+                    childAspectRatio:
+                        0.7, // Control the height-to-width ratio of grid items
                     children:
                         docs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
@@ -219,19 +150,22 @@ class _CustomerHomeState extends State<CustomerHome> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child:
-                                      data['gambar_url'] != null &&
-                                              data['gambar_url'] != ''
-                                          ? ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                  top: Radius.circular(16),
-                                                ),
-                                            child: Image.network(
+                                // Square image at the top - takes a fixed ratio of the card
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 80, // Fixed height for the image
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(16),
+                                    ),
+                                    child:
+                                        data['gambar_url'] != null &&
+                                                data['gambar_url'] != ''
+                                            ? Image.network(
+                                              fit: BoxFit.cover,
                                               data['gambar_url'],
                                               width: double.infinity,
-                                              fit: BoxFit.cover,
+                                              height: double.infinity,
                                               errorBuilder:
                                                   (
                                                     context,
@@ -245,53 +179,71 @@ class _CustomerHomeState extends State<CustomerHome> {
                                                       ),
                                                     ),
                                                   ),
-                                            ),
-                                          )
-                                          : Container(
-                                            color: Colors.grey[300],
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.image_not_supported,
+                                            )
+                                            : Container(
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                  ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        data['nama'] ?? '-',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
+
+                                // Expanded section for text and button
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              data['nama'] ?? '-',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              'Rp ${data['harga'] ?? 0}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      Text('Rp ${data['harga'] ?? 0}'),
-                                      const SizedBox(height: 4),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.lightBlue,
-                                            foregroundColor: Colors.white,
-                                            shape: const CircleBorder(),
-                                            padding: const EdgeInsets.all(12),
-                                            elevation: 0,
-                                          ),
-                                          onPressed:
-                                              () => addToCart({
-                                                'id': doc.id,
-                                                'nama': data['nama'],
-                                                'harga': data['harga'],
-                                              }),
-                                          child: const Icon(
-                                            Icons.add_shopping_cart,
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.lightBlue,
+                                              foregroundColor: Colors.white,
+                                              shape: const CircleBorder(),
+                                              padding: const EdgeInsets.all(2),
+                                              elevation: 0,
+                                            ),
+                                            onPressed:
+                                                () => addToCart({
+                                                  'id': doc.id,
+                                                  'nama': data['nama'],
+                                                  'harga': data['harga'],
+                                                }),
+                                            child: const Icon(
+                                              Icons.add_shopping_cart,
+                                              size: 24,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -302,7 +254,7 @@ class _CustomerHomeState extends State<CustomerHome> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
