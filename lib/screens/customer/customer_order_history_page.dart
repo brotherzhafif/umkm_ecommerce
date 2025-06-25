@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/drawer_customer.dart';
+import './customer_order_detail_page.dart';
 
 class CustomerOrderHistoryPage extends StatelessWidget {
   const CustomerOrderHistoryPage({super.key});
@@ -8,9 +9,7 @@ class CustomerOrderHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: DrawerCustomer(
-        selectedIndex: 1, // or the appropriate index for this page
-      ),
+      drawer: DrawerCustomer(selectedIndex: 1),
       appBar: AppBar(
         backgroundColor: Colors.lightBlue,
         elevation: 0,
@@ -100,6 +99,10 @@ class CustomerOrderHistoryPage extends StatelessWidget {
                       ? "${tanggal.day}/${tanggal.month}/${tanggal.year} ${tanggal.hour}:${tanggal.minute}"
                       : "-";
 
+              final status = data['status'] as String? ?? 'Unknown';
+              final canEdit =
+                  status == 'Belum Dibayar' || status == 'Menunggu Konfirmasi';
+
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 16),
@@ -108,9 +111,32 @@ class CustomerOrderHistoryPage extends StatelessWidget {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
-                  title: Text(
-                    "Pesanan #${doc.id.substring(0, 8)}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  title: Row(
+                    children: [
+                      Text(
+                        "Pesanan #${doc.id.substring(0, 8)}",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                      if (canEdit)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.blue.withOpacity(0.5),
+                            ),
+                          ),
+                          child: const Text(
+                            'Dapat Diedit',
+                            style: TextStyle(fontSize: 10, color: Colors.blue),
+                          ),
+                        ),
+                    ],
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,20 +151,38 @@ class CustomerOrderHistoryPage extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(data['status'] ?? ''),
+                          color: _getStatusColor(status),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          data['status'] ?? 'Menunggu Konfirmasi',
+                          status,
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),
                     ],
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    // View order details if needed
-                    // Navigator.pushNamed(context, '/customer-order-detail', arguments: doc.id);
+                  onTap: () async {
+                    // Navigate to detail page
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                CustomerOrderDetailPage(orderId: doc.id),
+                      ),
+                    );
+
+                    // If the order was updated, show a message
+                    if (result == true) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Pesanan telah diperbarui'),
+                          ),
+                        );
+                      }
+                    }
                   },
                 ),
               );
@@ -159,8 +203,8 @@ class CustomerOrderHistoryPage extends StatelessWidget {
         return Colors.orange[100]!;
       case 'Menunggu Konfirmasi':
         return Colors.yellow[100]!;
-      case 'Menunggu Pembayaran':
-        return Colors.grey[300]!;
+      case 'Belum Dibayar':
+        return Colors.red[100]!;
       default:
         return Colors.grey[200]!;
     }
