@@ -14,12 +14,17 @@ class OrderTable extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Selesai Pembayaran':
+      case 'Selesai':
         return Colors.green[100]!;
-      case 'Menunggu Diproses':
-        return Colors.yellow[100]!;
-      case 'Sedang Diproses':
+      case 'Diproses':
         return Colors.blue[100]!;
+      case 'Dikirim':
+        return Colors.orange[100]!;
+      case 'Menunggu Konfirmasi':
+        return Colors.yellow[100]!;
+      case 'Belum Dibayar':
+      case 'Menunggu Pembayaran':
+        return Colors.red[100]!;
       default:
         return Colors.grey[200]!;
     }
@@ -64,7 +69,7 @@ class OrderTable extends StatelessWidget {
                         isDense: true,
                         icon: const Icon(Icons.arrow_drop_down, size: 18),
                         onChanged: (val) {
-                          if (val != null) {
+                          if (val != null && val != order['status']) {
                             onStatusChanged(order['id'], val);
                           }
                         },
@@ -74,12 +79,12 @@ class OrderTable extends StatelessWidget {
                             child: Text('Menunggu Konfirmasi'),
                           ),
                           DropdownMenuItem(
-                            value: 'Selesai Pembayaran',
-                            child: Text('Selesai Pembayaran'),
+                            value: 'Diproses',
+                            child: Text('Diproses'),
                           ),
                           DropdownMenuItem(
-                            value: 'Sedang Diproses',
-                            child: Text('Sedang Diproses'),
+                            value: 'Dikirim',
+                            child: Text('Dikirim'),
                           ),
                           DropdownMenuItem(
                             value: 'Selesai',

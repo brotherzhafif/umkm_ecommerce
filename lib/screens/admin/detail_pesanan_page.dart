@@ -18,27 +18,56 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
   Future<void> _updateStatus() async {
     if (_selectedStatus == null) return;
 
+    // Store the status being updated for feedback
+    final statusToUpdate = _selectedStatus;
+
     setState(() => _isUpdating = true);
 
     try {
+      // Show immediate feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mengubah status menjadi $statusToUpdate...'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+
+      // Simple update instead of transaction for faster response
       await FirebaseFirestore.instance
           .collection('pesanan')
           .doc(widget.pesananId)
-          .update({'status': _selectedStatus});
+          .update({
+            'status': statusToUpdate,
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
 
+      // Only show completion message if still mounted
       if (!mounted) return;
+
+      // Update local state to reflect change immediately
+      setState(() {
+        _selectedStatus = statusToUpdate;
+        _isUpdating = false;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Status pesanan diperbarui ke $_selectedStatus'),
+          content: Text('Status pesanan diperbarui ke $statusToUpdate'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    } finally {
+
       setState(() => _isUpdating = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -46,26 +75,67 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
     setState(() => _isUpdating = true);
 
     try {
-      await FirebaseFirestore.instance
+      // Show immediate feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Memvalidasi pembayaran...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Do payment validation in a single batch
+      final batch = FirebaseFirestore.instance.batch();
+
+      // Update order status
+      final orderRef = FirebaseFirestore.instance
           .collection('pesanan')
-          .doc(widget.pesananId)
-          .update({
-            'status': 'Diproses',
-            'pembayaran_divalidasi': true,
-            'waktu_validasi': FieldValue.serverTimestamp(),
-          });
+          .doc(widget.pesananId);
+
+      batch.update(orderRef, {
+        'status': 'Diproses',
+        'pembayaran_divalidasi': true,
+        'waktu_validasi': FieldValue.serverTimestamp(),
+      });
+
+      // Also update payment record if it exists
+      final paymentRef = FirebaseFirestore.instance
+          .collection('pembayaran')
+          .doc(widget.pesananId);
+
+      // Check if payment document exists
+      final paymentDoc = await paymentRef.get();
+      if (paymentDoc.exists) {
+        batch.update(paymentRef, {
+          'status': 'Validated',
+          'validation_time': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Commit the batch
+      await batch.commit();
+
+      // Update local state immediately
+      setState(() {
+        _selectedStatus = 'Diproses';
+        _isUpdating = false;
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pembayaran telah divalidasi')),
+        const SnackBar(
+          content: Text('Pembayaran telah divalidasi'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-    } finally {
       setState(() => _isUpdating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -117,7 +187,11 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
             return const Center(child: CircularProgressIndicator());
           }
           final data = snapshot.data!.data() as Map<String, dynamic>;
-          _selectedStatus = data['status'];
+
+          // Only update _selectedStatus from server data if not currently updating
+          if (!_isUpdating) {
+            _selectedStatus = data['status'];
+          }
 
           final tanggal = (data['tanggal'] as Timestamp?)?.toDate();
           final formattedDate =
@@ -171,12 +245,12 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(
-                                      data['status'] ?? '',
+                                      _selectedStatus ?? '',
                                     ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    data['status'] ?? 'Menunggu Konfirmasi',
+                                    _selectedStatus ?? 'Menunggu Konfirmasi',
                                   ),
                                 ),
                               ],
@@ -192,6 +266,10 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                       border: OutlineInputBorder(),
                                     ),
                                     items: const [
+                                      DropdownMenuItem(
+                                        value: 'Belum Dibayar',
+                                        child: Text('Belum Dibayar'),
+                                      ),
                                       DropdownMenuItem(
                                         value: 'Menunggu Pembayaran',
                                         child: Text('Menunggu Pembayaran'),
@@ -213,9 +291,18 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                         child: Text('Selesai'),
                                       ),
                                     ],
-                                    onChanged: (val) {
-                                      setState(() => _selectedStatus = val);
-                                    },
+                                    onChanged:
+                                        _isUpdating
+                                            ? null // Disable during update
+                                            : (val) {
+                                              if (val != null &&
+                                                  val != _selectedStatus) {
+                                                setState(
+                                                  () => _selectedStatus = val,
+                                                );
+                                                _updateStatus();
+                                              }
+                                            },
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -524,8 +611,9 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
         return Colors.orange[100]!;
       case 'Menunggu Konfirmasi':
         return Colors.yellow[100]!;
+      case 'Belum Dibayar':
       case 'Menunggu Pembayaran':
-        return Colors.grey[300]!;
+        return Colors.red[100]!;
       default:
         return Colors.grey[200]!;
     }

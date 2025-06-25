@@ -64,11 +64,19 @@ class _AdminOrderDetailState extends State<AdminOrderDetail> {
 
   Future<void> _updateOrderStatus(String newStatus) async {
     try {
+      // Use a loading indicator
+      setState(() => isLoading = true);
+
+      // Update the order status
       await FirebaseFirestore.instance
           .collection('pesanan')
           .doc(widget.orderId)
-          .update({'status': newStatus});
+          .update({
+            'status': newStatus,
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
 
+      // Update the local order object
       setState(() {
         if (order != null) {
           order = OrderModel(
@@ -81,33 +89,40 @@ class _AdminOrderDetailState extends State<AdminOrderDetail> {
             tanggal: order!.tanggal,
             buktiPembayaranUrl: order!.buktiPembayaranUrl,
             idPembayaran: order!.idPembayaran,
+            pembayaranDivalidasi: order!.pembayaranDivalidasi,
+            waktuValidasi: order!.waktuValidasi,
           );
         }
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Status pesanan berhasil diupdate')),
+        SnackBar(
+          content: Text('Status pesanan berhasil diupdate ke $newStatus'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'Selesai Pembayaran':
+      case 'Selesai':
         return Colors.green[100]!;
-      case 'Sedang Diproses':
+      case 'Diproses':
         return Colors.blue[100]!;
-      case 'Menunggu Diproses':
+      case 'Dikirim':
+        return Colors.orange[100]!;
       case 'Menunggu Konfirmasi':
         return Colors.yellow[100]!;
       case 'Belum Dibayar':
+      case 'Menunggu Pembayaran':
         return Colors.red[100]!;
-      case 'Selesai':
-        return Colors.green[200]!;
       default:
         return Colors.grey[200]!;
     }

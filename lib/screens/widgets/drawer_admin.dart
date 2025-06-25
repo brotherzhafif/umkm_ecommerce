@@ -61,71 +61,14 @@ class DrawerAdmin extends StatelessWidget {
               ),
               onTap: () => onTap(2),
             ),
-            ExpansionTile(
+            ListTile(
+              selected: selectedIndex == 3,
               leading: const Icon(Icons.bar_chart, color: Colors.white),
               title: const Text(
                 "Laporan",
                 style: TextStyle(color: Colors.white),
               ),
-              children: [
-                ListTile(
-                  selected: selectedIndex == 3,
-                  leading: const Icon(Icons.bar_chart, color: Colors.white),
-                  title: const Text(
-                    "Laporan Penjualan",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () => onTap(3),
-                ),
-                ListTile(
-                  selected: selectedIndex == 4,
-                  leading: const Icon(
-                    Icons.monetization_on,
-                    color: Colors.white,
-                  ),
-                  title: const Text(
-                    "Laporan Keuntungan",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () => onTap(4),
-                ),
-              ],
-            ),
-            const Divider(color: Colors.white70),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.white),
-              title: const Text(
-                "Logout",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await showDialog(
-                  context: context,
-                  builder:
-                      (ctx) => AlertDialog(
-                        title: const Text('Logout'),
-                        content: const Text('Yakin ingin logout?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Batal'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/',
-                                (route) => false,
-                              );
-                            },
-                            child: const Text('Logout'),
-                          ),
-                        ],
-                      ),
-                );
-              },
+              onTap: () => onTap(3),
             ),
           ],
         ),

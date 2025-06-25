@@ -36,6 +36,39 @@ class CustomerOrderHistoryPage extends StatelessWidget {
           ],
         ),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await showDialog(
+                context: context,
+                builder:
+                    (ctx) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Yakin ingin logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Batal'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/',
+                              (route) => false,
+                            );
+                          },
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream:

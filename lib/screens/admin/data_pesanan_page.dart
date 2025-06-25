@@ -83,10 +83,10 @@ class DataPesananPage extends StatelessWidget {
                                       doc.data() as Map<String, dynamic>;
                                   Color statusColor;
                                   switch (data['status']) {
-                                    case 'Selesai Pembayaran':
+                                    case 'Selesai':
                                       statusColor = Colors.green[200]!;
                                       break;
-                                    case 'Sedang Diproses':
+                                    case 'Diproses':
                                       statusColor = Colors.blue[200]!;
                                       break;
                                     case 'Menunggu Pembayaran':
@@ -165,5 +165,23 @@ class DataPesananPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Selesai':
+        return Colors.green[100]!;
+      case 'Diproses':
+        return Colors.blue[100]!;
+      case 'Dikirim':
+        return Colors.orange[100]!;
+      case 'Menunggu Konfirmasi':
+        return Colors.yellow[100]!;
+      case 'Belum Dibayar':
+      case 'Menunggu Pembayaran':
+        return Colors.red[100]!;
+      default:
+        return Colors.grey[200]!;
+    }
   }
 }

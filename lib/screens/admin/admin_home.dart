@@ -4,6 +4,7 @@ import 'dashboard_page.dart';
 import 'menu_produk_page.dart';
 import 'data_pesanan_page.dart';
 import '../widgets/drawer_admin.dart';
+import 'laporan_penjualan_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -16,9 +17,11 @@ class _AdminHomeState extends State<AdminHome> {
   int selectedIndex = 0;
 
   final List<Widget> pages = [
-    DashboardPage(),
-    MenuProdukPage(),
-    DataPesananPage(),
+    const DashboardPage(),
+    const MenuProdukPage(),
+    const DataPesananPage(),
+    const LaporanPenjualanPage(), // Add the sales report page
+    const Placeholder(), // Placeholder for profit report
   ];
   @override
   void initState() {
@@ -43,12 +46,14 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   void dispose() {
     // Restore orientation to allow all when leaving admin panel
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
     super.dispose();
   }
 
