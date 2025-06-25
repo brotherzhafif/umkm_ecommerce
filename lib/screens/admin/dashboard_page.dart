@@ -114,67 +114,98 @@ class _DashboardPageState extends State<DashboardPage> {
             // Metrics row builder
             StreamBuilder<QuerySnapshot>(
               stream:
-                  FirebaseFirestore.instance.collection('users').snapshots(),
-              builder: (context, userSnapshot) {
-                return StreamBuilder<QuerySnapshot>(
-                  stream:
-                      FirebaseFirestore.instance
-                          .collection('pesanan')
-                          .snapshots(),
-                  builder: (context, pesananSnapshot) {
-                    // Calculate metrics
-                    int totalPelanggan =
-                        userSnapshot.hasData
-                            ? userSnapshot.data!.docs.where((doc) {
-                              final userData =
-                                  doc.data() as Map<String, dynamic>;
-                              return userData['role'] == 'customer';
-                            }).length
-                            : 0;
+                  FirebaseFirestore.instance.collection('pesanan').snapshots(),
+              builder: (context, pesananSnapshot) {
+                // Calculate metrics
+                if (!pesananSnapshot.hasData) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _metricCard(
+                        'Pelanggan Bulan Ini',
+                        '0',
+                        Icons.people,
+                        Colors.cyan,
+                      ),
+                      _metricCard(
+                        'Penjualan Bulan Ini',
+                        '0',
+                        Icons.shopping_cart,
+                        Colors.lightBlue,
+                      ),
+                      _metricCard(
+                        'Pendapatan Bulan Ini',
+                        'Rp 0',
+                        Icons.attach_money,
+                        Colors.green,
+                      ),
+                    ],
+                  );
+                }
 
-                    int totalPesanan =
-                        pesananSnapshot.hasData
-                            ? pesananSnapshot.data!.docs.length
-                            : 0;
+                // Get current month orders
+                final now = DateTime.now();
+                final startOfMonth = DateTime(now.year, now.month, 1);
 
-                    int totalPendapatan = 0;
-                    if (pesananSnapshot.hasData) {
-                      for (var doc in pesananSnapshot.data!.docs) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        totalPendapatan += (data['total'] as int?) ?? 0;
-                      }
+                // Count unique customers from orders this month
+                final Set<String> uniqueCustomers = {};
+                int totalPesanan = 0;
+                int totalPendapatan = 0;
+
+                for (var doc in pesananSnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final Timestamp? orderTimestamp =
+                      data['tanggal'] as Timestamp?;
+
+                  // Skip if no timestamp
+                  if (orderTimestamp == null) continue;
+
+                  final orderDate = orderTimestamp.toDate();
+
+                  // Check if order is from current month
+                  if (orderDate.isAfter(startOfMonth)) {
+                    // Count the order
+                    totalPesanan++;
+
+                    // Add revenue
+                    totalPendapatan += (data['total'] as int?) ?? 0;
+
+                    // Add unique customer name to set
+                    final customerName = data['pelanggan'] as String?;
+                    if (customerName != null && customerName.isNotEmpty) {
+                      uniqueCustomers.add(customerName);
                     }
+                  }
+                }
 
-                    final currencyFormat = NumberFormat.currency(
-                      locale: 'id',
-                      symbol: 'Rp ',
-                      decimalDigits: 0,
-                    );
+                final currencyFormat = NumberFormat.currency(
+                  locale: 'id',
+                  symbol: 'Rp ',
+                  decimalDigits: 0,
+                );
 
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _metricCard(
-                          'Pelanggan Bulan Ini',
-                          '$totalPelanggan',
-                          Icons.people,
-                          Colors.cyan,
-                        ),
-                        _metricCard(
-                          'Penjualan Bulan Ini',
-                          '$totalPesanan',
-                          Icons.shopping_cart,
-                          Colors.lightBlue,
-                        ),
-                        _metricCard(
-                          'Pendapatan Bulan Ini',
-                          currencyFormat.format(totalPendapatan),
-                          Icons.attach_money,
-                          Colors.green,
-                        ),
-                      ],
-                    );
-                  },
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _metricCard(
+                      'Pelanggan Bulan Ini',
+                      '${uniqueCustomers.length}',
+                      Icons.people,
+                      Colors.cyan,
+                    ),
+                    _metricCard(
+                      'Penjualan Bulan Ini',
+                      '$totalPesanan',
+                      Icons.shopping_cart,
+                      Colors.lightBlue,
+                    ),
+                    _metricCard(
+                      'Pendapatan Bulan Ini',
+                      currencyFormat.format(totalPendapatan),
+                      Icons.attach_money,
+                      Colors.green,
+                    ),
+                  ],
                 );
               },
             ),
