@@ -225,6 +225,7 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
+                            // Order details info
                             Text(
                               'ID Pesanan: ${widget.pesananId}',
                               style: const TextStyle(
@@ -235,6 +236,8 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                             Text('No Meja: ${data['meja'] ?? '-'}'),
                             Text('Tanggal: $formattedDate'),
                             const SizedBox(height: 16),
+
+                            // Status display
                             Row(
                               children: [
                                 const Text('Status: '),
@@ -256,77 +259,92 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            Row(
+
+                            // Status update section - fixed layout
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    value: _selectedStatus,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Ubah Status',
-                                      border: OutlineInputBorder(),
+                                // Dropdown to select status
+                                DropdownButtonFormField<String>(
+                                  value: _selectedStatus,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Ubah Status',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'Belum Dibayar',
+                                      child: Text('Belum Dibayar'),
                                     ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'Belum Dibayar',
-                                        child: Text('Belum Dibayar'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Menunggu Pembayaran',
-                                        child: Text('Menunggu Pembayaran'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Menunggu Konfirmasi',
-                                        child: Text('Menunggu Konfirmasi'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Diproses',
-                                        child: Text('Diproses'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Dikirim',
-                                        child: Text('Dikirim'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Selesai',
-                                        child: Text('Selesai'),
-                                      ),
-                                    ],
-                                    onChanged:
-                                        _isUpdating
-                                            ? null // Disable during update
-                                            : (val) {
-                                              if (val != null &&
-                                                  val != _selectedStatus) {
-                                                setState(
-                                                  () => _selectedStatus = val,
-                                                );
-                                                _updateStatus();
-                                              }
-                                            },
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                ElevatedButton(
-                                  onPressed: _isUpdating ? null : _updateStatus,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.lightBlue,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child:
+                                    DropdownMenuItem(
+                                      value: 'Menunggu Pembayaran',
+                                      child: Text('Menunggu Pembayaran'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Menunggu Konfirmasi',
+                                      child: Text('Menunggu Konfirmasi'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Diproses',
+                                      child: Text('Diproses'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Dikirim',
+                                      child: Text('Dikirim'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Selesai',
+                                      child: Text('Selesai'),
+                                    ),
+                                  ],
+                                  onChanged:
                                       _isUpdating
-                                          ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                          : const Text('Update'),
+                                          ? null
+                                          : (val) {
+                                            if (val != null &&
+                                                val != _selectedStatus) {
+                                              setState(
+                                                () => _selectedStatus = val,
+                                              );
+                                              _updateStatus();
+                                            }
+                                          },
+                                ),
+
+                                // Update button
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed:
+                                          _isUpdating ? null : _updateStatus,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.lightBlue,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      child:
+                                          _isUpdating
+                                              ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                              : const Text('Update'),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
 
+                            // Order notes section
                             if (data['catatan'] != null &&
                                 data['catatan'] != '')
                               Column(
@@ -354,6 +372,7 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                 ],
                               ),
 
+                            // Order items section
                             const SizedBox(height: 24),
                             const Text(
                               'Daftar Item Pesanan:',
@@ -363,6 +382,7 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
+
                             StreamBuilder<QuerySnapshot>(
                               stream:
                                   FirebaseFirestore.instance
@@ -461,14 +481,8 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text('ID Pembayaran:'),
-                                        Text(data['id_pembayaran'] ?? '-'),
-                                      ],
-                                    ),
+                                    const Text('ID Pembayaran:'),
+                                    Text(data['id_pembayaran'] ?? '-'),
                                     const SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment:

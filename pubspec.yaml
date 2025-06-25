@@ -44,6 +44,7 @@ dependencies:
   flutter_local_notifications: ^19.2.1
   intl: ^0.20.2
   firebase_storage: ^12.4.7
+  fl_chart: ^0.65.0 # Add this line for pie charts
 
 dev_dependencies:
   flutter_test:

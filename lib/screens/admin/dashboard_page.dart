@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -247,6 +248,50 @@ class _DashboardPageState extends State<DashboardPage> {
         productCounts.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
+    // Take top 5 products for the chart
+    final topProducts = sortedProducts.take(5).toList();
+
+    // Prepare pie chart data
+    final List<PieChartSectionData> sections = [];
+    final List<Color> chartColors = [
+      color,
+      Colors.green,
+      Colors.purple,
+      Colors.orange,
+      Colors.teal,
+    ];
+
+    // Calculate the total of top products for percentage
+    final int totalCount = topProducts.fold(
+      0,
+      (sum, product) => sum + product.value,
+    );
+
+    // Create sections for pie chart
+    for (int i = 0; i < topProducts.length; i++) {
+      final product = topProducts[i];
+      final percentage =
+          totalCount > 0
+              ? (product.value / totalCount * 100).toStringAsFixed(1)
+              : '0';
+
+      sections.add(
+        PieChartSectionData(
+          value: product.value.toDouble(),
+          title: '$percentage%',
+          radius: 50, // Reduced radius from 70 to 50
+          titleStyle: const TextStyle(
+            fontSize: 8, // Smaller font size from 10 to 8
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          color: chartColors[i % chartColors.length],
+          badgeWidget: null,
+          badgePositionPercentageOffset: 1.5,
+        ),
+      );
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -259,13 +304,16 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      height: 180,
+                      height: 220, // Reduced height from 260 to 220
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -275,109 +323,153 @@ class _DashboardPageState extends State<DashboardPage> {
                                   'Belum ada ${title.toLowerCase()} terjual',
                                   style: TextStyle(color: Colors.grey[600]),
                                 )
-                                : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      sortedProducts[0].key,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    Text(
-                                      '${sortedProducts[0].value} porsi',
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    // Simple bar chart visualization
-                                    if (sortedProducts.length > 1)
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          for (
-                                            int i = 0;
-                                            i < sortedProducts.length && i < 3;
-                                            i++
-                                          )
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                  ),
-                                              child: Column(
-                                                children: [
-                                                  Container(
-                                                    width: 30,
-                                                    height:
-                                                        80 *
-                                                        (sortedProducts[i]
-                                                                .value /
-                                                            sortedProducts[0]
-                                                                .value),
-                                                    color:
-                                                        i == 0
-                                                            ? color
-                                                            : i == 1
-                                                            ? Colors.green
-                                                            : Colors.purple,
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    sortedProducts[i].key
-                                                        .split(' ')
-                                                        .first,
-                                                    style: const TextStyle(
-                                                      fontSize: 10,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
+                                : Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Add the most popular product at the top
+                                      if (sortedProducts.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical:
+                                                6, // Reduced padding from 8 to 6
+                                          ),
+
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                'Paling Populer',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize:
+                                                      12, // Reduced from default
+                                                ),
                                               ),
-                                            ),
-                                        ],
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                sortedProducts[0].key,
+                                                style: const TextStyle(
+                                                  fontSize:
+                                                      14, // Reduced from 16 to 14
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                '${sortedProducts[0].value} porsi',
+                                                style: TextStyle(
+                                                  fontSize:
+                                                      12, // Reduced from 14 to 12
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                      // Pie chart
+                                      Expanded(
+                                        child:
+                                            topProducts.isEmpty
+                                                ? const Center(
+                                                  child: Text('Tidak ada data'),
+                                                )
+                                                : Padding(
+                                                  padding: const EdgeInsets.only(
+                                                    top:
+                                                        4, // Reduced from 8 to 4
+                                                    bottom:
+                                                        12, // Reduced from 16 to 12
+                                                  ),
+                                                  child: PieChart(
+                                                    PieChartData(
+                                                      sections: sections,
+                                                      centerSpaceRadius:
+                                                          30, // Reduced from 50 to 30
+                                                      sectionsSpace:
+                                                          2, // Reduced from 4 to 2
+                                                      pieTouchData:
+                                                          PieTouchData(
+                                                            touchCallback:
+                                                                (_, __) {},
+                                                            enabled: true,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
                                       ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Show top products as legend
+                    // Legend for the pie chart - cleaner layout
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children:
                           sortedProducts.isEmpty
                               ? [const Text('Tidak ada data yang tersedia')]
                               : [
-                                for (
-                                  int i = 0;
-                                  i < sortedProducts.length && i < 3;
-                                  i++
-                                )
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: Row(
-                                      children: [
-                                        _legendDot(
-                                          i == 0
-                                              ? color
-                                              : i == 1
-                                              ? Colors.green
-                                              : Colors.purple,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            '${sortedProducts[i].key} (${sortedProducts[i].value})',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
+                                // Title for the legend
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text(
+                                    'Persentase Penjualan:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[700],
+                                      fontSize: 13,
                                     ),
                                   ),
+                                ),
+                                // Legend items with grid layout for better space usage
+                                GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 8,
+                                        crossAxisSpacing: 8,
+                                        mainAxisSpacing: 8,
+                                      ),
+                                  itemCount: topProducts.length,
+                                  itemBuilder: (context, i) {
+                                    return Row(
+                                      children: [
+                                        _legendDot(
+                                          chartColors[i % chartColors.length],
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            '${topProducts[i].key.length > 15 ? topProducts[i].key.substring(0, 15) + '...' : topProducts[i].key}',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        if (totalCount > 0)
+                                          Text(
+                                            '${(topProducts[i].value / totalCount * 100).toStringAsFixed(0)}%',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ],
                     ),
                   ],
@@ -412,7 +504,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Container(
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(12),
                 child: Icon(icon, color: color, size: 16),
