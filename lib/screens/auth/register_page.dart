@@ -78,7 +78,16 @@ class _RegisterPageState extends State<RegisterPage> {
           .set({'email': emailController.text, 'role': selectedRole});
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/');
+
+      // Show success message and navigate back to welcome
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registrasi berhasil! Silakan login.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     } catch (e) {
       String errorMsg = 'Gagal daftar';
       if (e is FirebaseAuthException) {
@@ -108,6 +117,14 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Card(
@@ -214,7 +231,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 16),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/'),
+                      onTap:
+                          () =>
+                              Navigator.pushReplacementNamed(context, '/login'),
                       child: const Text(
                         "Sudah punya akun? Login di sini",
                         style: TextStyle(

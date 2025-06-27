@@ -1,5 +1,6 @@
 // File: lib/routes.dart
 import 'package:flutter/material.dart';
+import 'screens/welcome_page.dart';
 import 'screens/admin/admin_home.dart';
 import 'screens/auth/login_page.dart';
 import 'screens/auth/register_page.dart';
@@ -13,7 +14,8 @@ import 'screens/customer/customer_order_history_page.dart';
 import 'screens/customer/customer_order_detail_page.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
-  '/': (context) => const LoginPage(),
+  '/': (context) => const WelcomePage(),
+  '/login': (context) => const LoginPage(),
   '/admin': (context) => const AdminHome(),
   '/register': (context) => const RegisterPage(),
   '/dashboard': (context) => const DashboardPage(),
