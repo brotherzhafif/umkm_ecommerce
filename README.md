@@ -30,11 +30,27 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
 
 ### Customer Features
 
-- Product browsing and ordering
-- Cart management
-- Order tracking
-- Payment processing and proof of payment upload
-- Order history
+- Product browsing with quantity controls (stepper UI)
+- Advanced cart management with add/remove quantity
+- Multiple delivery options:
+  - Dine-in with table selection
+  - Table delivery service
+  - Address delivery
+- Flexible payment methods:
+  - Bank transfer with proof upload
+  - Pay on-site (cash payment)
+- Order tracking with real-time status updates
+- Order history and detailed order management
+- Enhanced order form with delivery preferences
+
+### Enhanced Order Management
+
+- **Quantity Controls**: Add/remove items with intuitive stepper controls
+- **Delivery Options**: Choose between dine-in, table delivery, or address delivery
+- **Table Selection**: Pick from tables 1-10 for dine-in or table delivery
+- **Address Input**: Enter delivery address for home delivery orders
+- **Payment Flexibility**: Support for both transfer payments and cash-on-delivery
+- **Smart Validation**: Form validation based on selected delivery and payment options
 
 ## Technology Stack
 
@@ -112,14 +128,15 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
 5. **Payment Verification**: Verify payment proofs uploaded by customers
 6. **Reports**: Generate and view sales reports
 
-### Customer Workflow
+### Enhanced Customer Workflow
 
 1. **Login/Register**: Customer logs in or creates a new account
-2. **Browse Products**: View available products
-3. **Add to Cart**: Select products and add to cart
-4. **Checkout**: Submit order with details (name, table number, notes)
-5. **Payment**: Upload payment proof or mark for in-person payment
-6. **Order Status**: Track order status through the process
+2. **Browse Products**: View available products with quantity controls
+3. **Manage Cart**: Use stepper controls to add/remove items, see real-time totals
+4. **Select Delivery**: Choose between dine-in, table delivery, or address delivery
+5. **Choose Payment**: Select bank transfer or cash payment method
+6. **Checkout**: Complete order with delivery and payment preferences
+7. **Track Order**: Monitor order status through the fulfillment process
 
 ## Data Structure
 
@@ -139,11 +156,15 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
    - `gambar_url`: String
    - `createdAt`: Timestamp
 
-3. **pesanan** (Orders)
+3. **pesanan** (Orders) - Enhanced Structure
 
    - `pelanggan`: String
-   - `meja`: String
+   - `meja`: String (for table numbers)
+   - `alamat_pengiriman`: String (for address delivery)
+   - `tipe_pengiriman`: String (dine_in, table_delivery, address_delivery)
+   - `info_pengiriman`: String (formatted delivery information)
    - `catatan`: String
+   - `metode_pembayaran`: String (transfer, cash)
    - `status`: String (Belum Dibayar, Menunggu Konfirmasi, Diproses, Dikirim, Selesai)
    - `total`: Number
    - `tanggal`: Timestamp
@@ -156,10 +177,11 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
      - `jumlah`: Number
      - `total`: Number
 
-4. **pembayaran** (Payments)
+4. **pembayaran** (Payments) - Enhanced Structure
    - `id_pesanan`: String
    - `bukti_pembayaran_url`: String
    - `waktu_pembayaran`: Timestamp
+   - `metode_pembayaran`: String (transfer, cash)
    - `status`: String
 
 ## User Roles
@@ -169,13 +191,15 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
 - Full access to all features
 - Can manage products, orders, and reports
 - Can validate payments and update order status
+- Monitor delivery and payment methods
 
 ### Customer
 
-- Can browse products and place orders
-- Can upload payment proof
-- Can track order status
-- Can view order history
+- Enhanced product browsing with quantity controls
+- Flexible delivery options (dine-in, table delivery, address delivery)
+- Multiple payment methods (transfer, cash)
+- Advanced order management and tracking
+- Real-time cart updates with stepper controls
 
 ## Screens and Navigation
 
@@ -191,11 +215,11 @@ An integrated Point-of-Sale (POS) and E-Commerce application built for small to 
 ### Customer Screens
 
 - Login/Register
-- Product Catalog
-- Cart
-- Checkout
+- Enhanced Product Catalog with quantity steppers
+- Advanced Cart Management
+- Comprehensive Checkout with delivery/payment options
 - Order History
-- Order Details
+- Enhanced Order Details
 
 ## Project Structure
 
@@ -208,7 +232,7 @@ lib/
 ├── screens/
 │   ├── admin/             # Admin interface screens
 │   ├── auth/              # Authentication screens
-│   ├── customer/          # Customer interface screens
+│   ├── customer/          # Enhanced customer interface screens
 │   └── widgets/           # Shared widgets
 └── services/              # Business logic and services
 ```

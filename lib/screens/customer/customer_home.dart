@@ -42,11 +42,32 @@ class _CustomerHomeState extends State<CustomerHome> {
   void addToCart(Map<String, dynamic> item) {
     final index = cart.indexWhere((e) => e['id'] == item['id']);
     if (index >= 0) {
-      cart[index]['jumlah']++;
+      setState(() {
+        cart[index]['jumlah']++;
+      });
     } else {
-      cart.add({...item, 'jumlah': 1});
+      setState(() {
+        cart.add({...item, 'jumlah': 1});
+      });
     }
-    setState(() {});
+  }
+
+  void removeFromCart(String itemId) {
+    final index = cart.indexWhere((e) => e['id'] == itemId);
+    if (index >= 0) {
+      setState(() {
+        if (cart[index]['jumlah'] > 1) {
+          cart[index]['jumlah']--;
+        } else {
+          cart.removeAt(index);
+        }
+      });
+    }
+  }
+
+  int getItemQuantity(String itemId) {
+    final index = cart.indexWhere((e) => e['id'] == itemId);
+    return index >= 0 ? cart[index]['jumlah'] : 0;
   }
 
   int getTotal() => cart.fold(
@@ -141,10 +162,13 @@ class _CustomerHomeState extends State<CustomerHome> {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     childAspectRatio:
-                        0.7, // Control the height-to-width ratio of grid items
+                        0.75, // Control the height-to-width ratio of grid items
                     children:
                         docs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
+                          final itemId = doc.id;
+                          final quantity = getItemQuantity(itemId);
+
                           return Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -153,10 +177,10 @@ class _CustomerHomeState extends State<CustomerHome> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Square image at the top - takes a fixed ratio of the card
+                                // Image section
                                 SizedBox(
                                   width: double.infinity,
-                                  height: 80, // Fixed height for the image
+                                  height: 80,
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(16),
@@ -165,8 +189,8 @@ class _CustomerHomeState extends State<CustomerHome> {
                                         data['gambar_url'] != null &&
                                                 data['gambar_url'] != ''
                                             ? Image.network(
-                                              fit: BoxFit.cover,
                                               data['gambar_url'],
+                                              fit: BoxFit.cover,
                                               width: double.infinity,
                                               height: double.infinity,
                                               errorBuilder:
@@ -193,8 +217,7 @@ class _CustomerHomeState extends State<CustomerHome> {
                                             ),
                                   ),
                                 ),
-
-                                // Expanded section for text and button
+                                // Product info and controls
                                 Expanded(
                                   child: Padding(
                                     padding: const EdgeInsets.all(12),
@@ -212,36 +235,120 @@ class _CustomerHomeState extends State<CustomerHome> {
                                               data['nama'] ?? '-',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
+                                                fontSize: 14,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             Text(
                                               'Rp ${data['harga'] ?? 0}',
+                                              style: const TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
+                                            if (quantity > 0)
+                                              Text(
+                                                'x$quantity',
+                                                style: TextStyle(
+                                                  color: Colors.lightBlue,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
                                           ],
                                         ),
+                                        // Quantity controls
                                         Align(
-                                          alignment: Alignment.centerRight,
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.lightBlue,
-                                              foregroundColor: Colors.white,
-                                              shape: const CircleBorder(),
-                                              padding: const EdgeInsets.all(2),
-                                              elevation: 0,
+                                          alignment: Alignment.bottomRight,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[100],
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.grey[300]!,
+                                              ),
                                             ),
-                                            onPressed:
-                                                () => addToCart({
-                                                  'id': doc.id,
-                                                  'nama': data['nama'],
-                                                  'harga': data['harga'],
-                                                }),
-                                            child: const Icon(
-                                              Icons.add_shopping_cart,
-                                              size: 24,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Minus button
+                                                GestureDetector(
+                                                  onTap:
+                                                      quantity > 0
+                                                          ? () =>
+                                                              removeFromCart(
+                                                                itemId,
+                                                              )
+                                                          : null,
+                                                  child: Container(
+                                                    width: 28,
+                                                    height: 28,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          quantity > 0
+                                                              ? Colors.red[300]
+                                                              : Colors
+                                                                  .grey[300],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.remove,
+                                                      size: 16,
+                                                      color:
+                                                          quantity > 0
+                                                              ? Colors.white
+                                                              : Colors
+                                                                  .grey[600],
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Quantity input
+                                                Container(
+                                                  width: 40,
+                                                  height: 28,
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    '$quantity',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Plus button
+                                                GestureDetector(
+                                                  onTap:
+                                                      () => addToCart({
+                                                        'id': itemId,
+                                                        'nama': data['nama'],
+                                                        'harga': data['harga'],
+                                                      }),
+                                                  child: Container(
+                                                    width: 28,
+                                                    height: 28,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.lightBlue,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.add,
+                                                      size: 16,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
@@ -274,21 +381,30 @@ class _CustomerHomeState extends State<CustomerHome> {
                     ),
                     const SizedBox(height: 8),
                     ...cart.map(
-                      (item) => Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${item['nama']} x${item['jumlah']}",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            "Rp ${item['jumlah'] * item['harga']}",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ],
+                      (item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "${item['nama']} x${item['jumlah']}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "Rp ${item['jumlah'] * item['harga']}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const Divider(),
+                    if (cart.isNotEmpty) const Divider(),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -307,8 +423,12 @@ class _CustomerHomeState extends State<CustomerHome> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          foregroundColor: Colors.black,
+                          backgroundColor:
+                              cart.isEmpty
+                                  ? Colors.grey[300]
+                                  : Colors.lightBlue,
+                          foregroundColor:
+                              cart.isEmpty ? Colors.black : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -325,7 +445,7 @@ class _CustomerHomeState extends State<CustomerHome> {
                                   );
                                 },
                         child: const Text(
-                          "Bayar Sekarang",
+                          "Pesan Sekarang",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
