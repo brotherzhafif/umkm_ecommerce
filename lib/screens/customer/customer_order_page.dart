@@ -18,6 +18,8 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
   final TextEditingController mejaController = TextEditingController();
   final TextEditingController catatanController = TextEditingController();
   final TextEditingController alamatController = TextEditingController();
+  final TextEditingController phoneController =
+      TextEditingController(); // New phone controller
 
   bool loading = false;
   File? _buktiPembayaran;
@@ -123,6 +125,14 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
       return;
     }
 
+    // Add phone validation
+    if (phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nomor HP harus diisi')));
+      return;
+    }
+
     if (deliveryOption == 'dine_in' && selectedTable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih nomor meja untuk makan di tempat')),
@@ -190,11 +200,12 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
           break;
       }
 
-      // Create order document
+      // Create order document with phone number
       final pesananRef = await FirebaseFirestore.instance
           .collection('pesanan')
           .add({
             'pelanggan': namaController.text,
+            'phone': phoneController.text, // Add phone number
             'meja': tableNumber,
             'alamat_pengiriman':
                 deliveryOption == 'address_delivery'
@@ -322,6 +333,28 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                           borderSide: const BorderSide(color: Colors.black),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Phone number field
+                    TextFormField(
+                      controller: phoneController,
+                      decoration: InputDecoration(
+                        labelText: 'Nomor HP',
+                        hintText: 'Masukkan nomor HP aktif',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(32),
+                          borderSide: const BorderSide(color: Colors.black),
+                        ),
+                        prefixIcon: const Icon(Icons.phone_android),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Nomor HP harus diisi';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 

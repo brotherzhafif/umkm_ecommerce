@@ -1,6 +1,7 @@
 class OrderModel {
   final String id;
   final String pelanggan;
+  final String? phone; // Add phone field
   final String meja;
   final String? catatan;
   final String status;
@@ -20,6 +21,7 @@ class OrderModel {
   OrderModel({
     required this.id,
     required this.pelanggan,
+    this.phone, // Add phone parameter
     required this.meja,
     this.catatan,
     required this.status,
@@ -40,6 +42,7 @@ class OrderModel {
     return OrderModel(
       id: id,
       pelanggan: map['pelanggan'] ?? '',
+      phone: map['phone'], // Add phone from map
       meja: map['meja'] ?? '',
       catatan: map['catatan'],
       status: map['status'] ?? 'Menunggu Konfirmasi',
@@ -60,6 +63,7 @@ class OrderModel {
   Map<String, dynamic> toMap() {
     return {
       'pelanggan': pelanggan,
+      'phone': phone, // Add phone to map
       'meja': meja,
       'catatan': catatan,
       'status': status,

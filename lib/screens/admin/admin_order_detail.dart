@@ -187,6 +187,11 @@ class _AdminOrderDetailState extends State<AdminOrderDetail> {
                             _infoRow('ID Pesanan', order!.id),
                             _infoRow('Pelanggan', order!.pelanggan),
 
+                            // Display phone number if available
+                            if (order!.phone != null &&
+                                order!.phone!.isNotEmpty)
+                              _infoRow('No. HP Pelanggan', order!.phone!),
+
                             // Display either table number or delivery address
                             order!.tipe_pengiriman == 'address_delivery'
                                 ? _infoRow(

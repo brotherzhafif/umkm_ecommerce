@@ -234,6 +234,39 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                             ),
                             Text('Nama Pelanggan: ${data['pelanggan'] ?? '-'}'),
 
+                            // Display phone number
+                            if (data['phone'] != null &&
+                                data['phone'].toString().isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  // Handle phone number tap (could launch phone app)
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Menghubungi ${data['phone']}',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.phone,
+                                      color: Colors.green,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'HP: ${data['phone']}',
+                                      style: const TextStyle(
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
                             // Conditionally display either table number or delivery address
                             if (data['tipe_pengiriman'] == 'address_delivery')
                               Text(

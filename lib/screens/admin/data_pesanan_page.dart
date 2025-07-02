@@ -71,10 +71,10 @@ class DataPesananPage extends StatelessWidget {
                               DataColumn(label: Text('ID Pesanan')),
                               DataColumn(label: Text('Lokasi/Meja')),
                               DataColumn(label: Text('Pelanggan')),
+                              DataColumn(label: Text('No. HP')),
                               DataColumn(label: Text('Status')),
                               DataColumn(label: Text('Tanggal')),
                               DataColumn(label: Text('Total Harga')),
-                              DataColumn(label: Text('ID Pembayaran')),
                               DataColumn(label: Text('Aksi')),
                             ],
                             rows:
@@ -138,6 +138,43 @@ class DataPesananPage extends StatelessWidget {
                                         ),
                                       ),
                                       DataCell(Text(data['pelanggan'] ?? '-')),
+                                      // Display phone number
+                                      DataCell(
+                                        data['phone'] != null &&
+                                                data['phone']
+                                                    .toString()
+                                                    .isNotEmpty
+                                            ? GestureDetector(
+                                              onTap: () {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Menghubungi ${data['phone']}',
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.phone,
+                                                    color: Colors.green,
+                                                    size: 14,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    data['phone'].toString(),
+                                                    style: const TextStyle(
+                                                      color: Colors.blue,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                            : const Text('-'),
+                                      ),
                                       DataCell(
                                         Container(
                                           padding: const EdgeInsets.symmetric(
@@ -164,9 +201,6 @@ class DataPesananPage extends StatelessWidget {
                                       ),
                                       DataCell(
                                         Text('Rp ${data['total'] ?? 0}'),
-                                      ),
-                                      DataCell(
-                                        Text(data['id_pembayaran'] ?? '-'),
                                       ),
                                       DataCell(
                                         ElevatedButton(

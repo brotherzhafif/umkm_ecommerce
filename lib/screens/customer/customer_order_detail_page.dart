@@ -179,6 +179,12 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
                           'Nama',
                           Text(orderData['pelanggan'] ?? '-'),
                         ),
+
+                        // Show phone number if available
+                        if (orderData['phone'] != null &&
+                            orderData['phone'].toString().isNotEmpty)
+                          _buildInfoRow('No. HP', Text(orderData['phone'])),
+
                         _buildInfoRow(
                           'No Meja',
                           Text(orderData['meja'] ?? '-'),
