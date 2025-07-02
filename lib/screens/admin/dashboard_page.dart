@@ -67,8 +67,6 @@ class _DashboardPageState extends State<DashboardPage> {
               itemQuantity;
         }
       }
-
-      print('Loaded data: ${productCountsByCategory.toString()}');
     } catch (e) {
       print('Error loading product data: $e');
     } finally {
