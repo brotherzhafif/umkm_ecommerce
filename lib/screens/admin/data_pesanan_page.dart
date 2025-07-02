@@ -69,7 +69,7 @@ class DataPesananPage extends StatelessWidget {
                           child: DataTable(
                             columns: const [
                               DataColumn(label: Text('ID Pesanan')),
-                              DataColumn(label: Text('No Meja')),
+                              DataColumn(label: Text('Lokasi/Meja')),
                               DataColumn(label: Text('Pelanggan')),
                               DataColumn(label: Text('Status')),
                               DataColumn(label: Text('Tanggal')),
@@ -89,8 +89,18 @@ class DataPesananPage extends StatelessWidget {
                                     case 'Diproses':
                                       statusColor = Colors.blue[200]!;
                                       break;
-                                    case 'Menunggu Pembayaran':
+                                    case 'Dikirim':
+                                      statusColor = Colors.orange[200]!;
+                                      break;
+                                    case 'Pembayaran Selesai':
+                                      statusColor = Colors.teal[200]!;
+                                      break;
+                                    case 'Menunggu Konfirmasi':
                                       statusColor = Colors.yellow[200]!;
+                                      break;
+                                    case 'Belum Dibayar':
+                                    case 'Menunggu Pembayaran':
+                                      statusColor = Colors.red[200]!;
                                       break;
                                     default:
                                       statusColor = Colors.grey[200]!;
@@ -98,7 +108,35 @@ class DataPesananPage extends StatelessWidget {
                                   return DataRow(
                                     cells: [
                                       DataCell(Text(doc.id)),
-                                      DataCell(Text(data['meja'] ?? '-')),
+                                      // Show either table number or delivery address
+                                      DataCell(
+                                        Text(
+                                          data['tipe_pengiriman'] ==
+                                                  'address_delivery'
+                                              ? (data['alamat_pengiriman'] !=
+                                                          null &&
+                                                      data['alamat_pengiriman']
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? '📍 ' +
+                                                      data['alamat_pengiriman']
+                                                          .toString()
+                                                          .substring(
+                                                            0,
+                                                            data['alamat_pengiriman']
+                                                                        .toString()
+                                                                        .length >
+                                                                    15
+                                                                ? 15
+                                                                : data['alamat_pengiriman']
+                                                                    .toString()
+                                                                    .length,
+                                                          ) +
+                                                      '...'
+                                                  : '-')
+                                              : '🪑 Meja ${data['meja'] ?? '-'}',
+                                        ),
+                                      ),
                                       DataCell(Text(data['pelanggan'] ?? '-')),
                                       DataCell(
                                         Container(
@@ -175,6 +213,8 @@ class DataPesananPage extends StatelessWidget {
         return Colors.blue[100]!;
       case 'Dikirim':
         return Colors.orange[100]!;
+      case 'Pembayaran Selesai':
+        return Colors.teal[100]!;
       case 'Menunggu Konfirmasi':
         return Colors.yellow[100]!;
       case 'Belum Dibayar':

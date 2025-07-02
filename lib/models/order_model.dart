@@ -11,6 +11,11 @@ class OrderModel {
   final List<OrderItemModel>? items;
   final bool? pembayaranDivalidasi;
   final DateTime? waktuValidasi;
+  // New fields for delivery options
+  final String? alamat_pengiriman;
+  final String tipe_pengiriman;
+  final String? info_pengiriman;
+  final String metode_pembayaran;
 
   OrderModel({
     required this.id,
@@ -25,6 +30,10 @@ class OrderModel {
     this.items,
     this.pembayaranDivalidasi,
     this.waktuValidasi,
+    this.alamat_pengiriman,
+    this.tipe_pengiriman = 'dine_in',
+    this.info_pengiriman,
+    this.metode_pembayaran = 'transfer',
   });
 
   factory OrderModel.fromMap(String id, Map<String, dynamic> map) {
@@ -41,6 +50,10 @@ class OrderModel {
       items: null, // Items loaded separately
       pembayaranDivalidasi: map['pembayaran_divalidasi'],
       waktuValidasi: map['waktu_validasi']?.toDate(),
+      alamat_pengiriman: map['alamat_pengiriman'],
+      tipe_pengiriman: map['tipe_pengiriman'] ?? 'dine_in',
+      info_pengiriman: map['info_pengiriman'],
+      metode_pembayaran: map['metode_pembayaran'] ?? 'transfer',
     );
   }
 
@@ -56,6 +69,10 @@ class OrderModel {
       'id_pembayaran': idPembayaran,
       'pembayaran_divalidasi': pembayaranDivalidasi,
       'waktu_validasi': waktuValidasi,
+      'alamat_pengiriman': alamat_pengiriman,
+      'tipe_pengiriman': tipe_pengiriman,
+      'info_pengiriman': info_pengiriman,
+      'metode_pembayaran': metode_pembayaran,
     };
   }
 }

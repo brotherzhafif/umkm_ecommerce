@@ -289,8 +289,9 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
 
                 const SizedBox(height: 16),
 
-                // Payment proof section - only show for orders that need payment
-                if (canEdit || hasPaymentProof)
+                // Payment proof section - only show for transfer payments
+                if ((canEdit || hasPaymentProof) &&
+                    orderData['metode_pembayaran'] != 'cash')
                   Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -310,7 +311,7 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
                           const SizedBox(height: 16),
 
                           // If payment proof exists, show it
-                          if (hasPaymentProof)
+                          if (hasPaymentProof) ...[
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
@@ -353,9 +354,8 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
                                       ),
                                     ),
                               ),
-                            )
-                          // If can edit and no proof yet, show upload option
-                          else if (canEdit)
+                            ),
+                          ] else if (canEdit) ...[
                             GestureDetector(
                               onTap: _pickImage,
                               child: Container(
@@ -427,6 +427,7 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
                                         ),
                               ),
                             ),
+                          ],
 
                           // Submit button for new payment proof
                           if (canEdit &&
@@ -464,6 +465,56 @@ class _CustomerOrderDetailPageState extends State<CustomerOrderDetailPage> {
                                 ),
                               ),
                             ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Show payment method info for cash payments
+                if (orderData['metode_pembayaran'] == 'cash')
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Metode Pembayaran',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[100],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange[300]!),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.money, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Pembayaran di Tempat',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Silakan lakukan pembayaran langsung kepada kasir saat pesanan siap.',
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),

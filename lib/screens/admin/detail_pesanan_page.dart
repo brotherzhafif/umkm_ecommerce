@@ -233,7 +233,15 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                               ),
                             ),
                             Text('Nama Pelanggan: ${data['pelanggan'] ?? '-'}'),
-                            Text('No Meja: ${data['meja'] ?? '-'}'),
+
+                            // Conditionally display either table number or delivery address
+                            if (data['tipe_pengiriman'] == 'address_delivery')
+                              Text(
+                                'Alamat Pengiriman: ${data['alamat_pengiriman'] ?? '-'}',
+                              )
+                            else
+                              Text('No Meja: ${data['meja'] ?? '-'}'),
+
                             Text('Tanggal: $formattedDate'),
                             const SizedBox(height: 16),
 
@@ -283,6 +291,10 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                     DropdownMenuItem(
                                       value: 'Menunggu Konfirmasi',
                                       child: Text('Menunggu Konfirmasi'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Pembayaran Selesai',
+                                      child: Text('Pembayaran Selesai'),
                                     ),
                                     DropdownMenuItem(
                                       value: 'Diproses',
@@ -481,6 +493,38 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Metode Pembayaran:'),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                data['metode_pembayaran'] ==
+                                                        'cash'
+                                                    ? Colors.orange[100]
+                                                    : Colors.blue[100],
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            data['metode_pembayaran'] == 'cash'
+                                                ? 'Bayar di Tempat'
+                                                : 'Transfer Bank',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
                                     const Text('ID Pembayaran:'),
                                     Text(data['id_pembayaran'] ?? '-'),
                                     const SizedBox(height: 12),
@@ -516,87 +560,165 @@ class _DetailPesananPageState extends State<DetailPesananPage> {
                                         ),
                                       ],
                                     ),
-                                    if (data['bukti_pembayaran_url'] != null)
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(height: 20),
-                                          const Text(
-                                            'Bukti Pembayaran:',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
+
+                                    // Only show payment proof section for transfer payments
+                                    if (data['metode_pembayaran'] !=
+                                        'cash') ...[
+                                      if (data['bukti_pembayaran_url'] != null)
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 20),
+                                            const Text(
+                                              'Bukti Pembayaran:',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            child: Image.network(
-                                              data['bukti_pembayaran_url'],
-                                              height: 300,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => Container(
-                                                    height: 300,
-                                                    color: Colors.grey[300],
-                                                    child: const Center(
-                                                      child: Icon(
-                                                        Icons.broken_image,
-                                                        size: 40,
+                                            const SizedBox(height: 8),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image.network(
+                                                data['bukti_pembayaran_url'],
+                                                height: 300,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => Container(
+                                                      height: 300,
+                                                      color: Colors.grey[300],
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons.broken_image,
+                                                          size: 40,
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
-                                            ),
-                                          ),
-                                          if (data['pembayaran_divalidasi'] !=
-                                              true)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 24,
                                               ),
-                                              child: SizedBox(
-                                                width: double.infinity,
-                                                child: ElevatedButton.icon(
-                                                  icon: const Icon(
-                                                    Icons.check_circle,
+                                            ),
+                                            if (data['pembayaran_divalidasi'] !=
+                                                true)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 24,
+                                                ),
+                                                child: SizedBox(
+                                                  width: double.infinity,
+                                                  child: ElevatedButton.icon(
+                                                    icon: const Icon(
+                                                      Icons.check_circle,
+                                                    ),
+                                                    label: const Text(
+                                                      'Validasi Pembayaran',
+                                                    ),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          Colors.green,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            vertical: 12,
+                                                          ),
+                                                    ),
+                                                    onPressed:
+                                                        _isUpdating
+                                                            ? null
+                                                            : _validatePayment,
                                                   ),
-                                                  label: const Text(
-                                                    'Validasi Pembayaran',
-                                                  ),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.green,
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          vertical: 12,
-                                                        ),
-                                                  ),
-                                                  onPressed:
-                                                      _isUpdating
-                                                          ? null
-                                                          : _validatePayment,
                                                 ),
                                               ),
+                                          ],
+                                        )
+                                      else
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 16),
+                                          child: Text(
+                                            'Pelanggan belum mengupload bukti pembayaran',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                    ]
+                                    // Show cash payment info
+                                    else ...[
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange[50],
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.orange[200]!,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: const [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.money,
+                                                  color: Colors.orange,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Pembayaran di Tempat',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.orange,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                        ],
-                                      ),
-                                    if (data['bukti_pembayaran_url'] == null)
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 16),
-                                        child: Text(
-                                          'Pelanggan belum mengupload bukti pembayaran',
-                                          style: TextStyle(color: Colors.red),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Pelanggan akan melakukan pembayaran langsung kepada kasir saat pengambilan pesanan.',
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
+                                      if (data['pembayaran_divalidasi'] != true)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 16,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              icon: const Icon(
+                                                Icons.check_circle,
+                                              ),
+                                              label: const Text(
+                                                'Konfirmasi Pembayaran Diterima',
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.green,
+                                                foregroundColor: Colors.white,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 12,
+                                                    ),
+                                              ),
+                                              onPressed:
+                                                  _isUpdating
+                                                      ? null
+                                                      : _validatePayment,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ],
                                 ),
                               ),

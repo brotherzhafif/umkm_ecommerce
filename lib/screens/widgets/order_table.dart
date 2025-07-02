@@ -20,6 +20,8 @@ class OrderTable extends StatelessWidget {
         return Colors.blue[100]!;
       case 'Dikirim':
         return Colors.orange[100]!;
+      case 'Pembayaran Selesai':
+        return Colors.teal[100]!;
       case 'Menunggu Konfirmasi':
         return Colors.yellow[100]!;
       case 'Belum Dibayar':
@@ -75,8 +77,16 @@ class OrderTable extends StatelessWidget {
                         },
                         items: const [
                           DropdownMenuItem(
+                            value: 'Belum Dibayar',
+                            child: Text('Belum Dibayar'),
+                          ),
+                          DropdownMenuItem(
                             value: 'Menunggu Konfirmasi',
                             child: Text('Menunggu Konfirmasi'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Pembayaran Selesai',
+                            child: Text('Pembayaran Selesai'),
                           ),
                           DropdownMenuItem(
                             value: 'Diproses',

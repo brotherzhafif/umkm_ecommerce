@@ -130,13 +130,6 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
       return;
     }
 
-    if (deliveryOption == 'dine_in' && selectedTable == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih nomor meja untuk pengantaran')),
-      );
-      return;
-    }
-
     if (deliveryOption == 'address_delivery' && alamatController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Alamat pengiriman harus diisi')),
@@ -144,6 +137,7 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
       return;
     }
 
+    // Only require payment proof for transfer method
     if (paymentMethod == 'transfer' && _buktiPembayaran == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -155,7 +149,7 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
 
     setState(() => loading = true);
 
-    // Upload payment proof if transfer method
+    // Upload payment proof only if transfer method and image selected
     if (paymentMethod == 'transfer' && _buktiPembayaran != null) {
       _uploadedImageUrl = await _uploadImage();
       if (_uploadedImageUrl == null) {
@@ -175,7 +169,7 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
       // Determine order status based on payment method
       String orderStatus;
       if (paymentMethod == 'cash') {
-        orderStatus = 'Belum Dibayar';
+        orderStatus = 'Belum Dibayar'; // Cash orders start as unpaid
       } else {
         orderStatus =
             _uploadedImageUrl != null ? 'Menunggu Konfirmasi' : 'Belum Dibayar';
@@ -228,8 +222,8 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
         });
       }
 
-      // Create payment record if proof was uploaded
-      if (_uploadedImageUrl != null) {
+      // Create payment record only if transfer method with proof
+      if (paymentMethod == 'transfer' && _uploadedImageUrl != null) {
         await FirebaseFirestore.instance
             .collection('pembayaran')
             .doc(pesananRef.id)
@@ -263,7 +257,8 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Pesanan berhasil dibuat')));
 
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      // Navigate back to customer home instead of login
+      Navigator.pushNamedAndRemoveUntil(context, '/customer', (route) => false);
     } catch (e) {
       setState(() => loading = false);
       ScaffoldMessenger.of(
@@ -367,9 +362,8 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Table selection (for dine_in and dine_in)
-                    if (deliveryOption == 'dine_in' ||
-                        deliveryOption == 'dine_in')
+                    // Table selection
+                    if (deliveryOption == 'dine_in')
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'Nomor Meja',
@@ -393,7 +387,7 @@ class _CustomerOrderPageState extends State<CustomerOrderPage> {
                         },
                       ),
 
-                    // Address input (for address_delivery)
+                    // Address input
                     if (deliveryOption == 'address_delivery')
                       TextFormField(
                         controller: alamatController,

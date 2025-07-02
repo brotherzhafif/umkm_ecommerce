@@ -186,7 +186,15 @@ class _AdminOrderDetailState extends State<AdminOrderDetail> {
                             const Divider(),
                             _infoRow('ID Pesanan', order!.id),
                             _infoRow('Pelanggan', order!.pelanggan),
-                            _infoRow('No. Meja', order!.meja),
+
+                            // Display either table number or delivery address
+                            order!.tipe_pengiriman == 'address_delivery'
+                                ? _infoRow(
+                                  'Alamat Pengiriman',
+                                  order!.alamat_pengiriman ?? '-',
+                                )
+                                : _infoRow('No. Meja', order!.meja),
+
                             _infoRow(
                               'Tanggal',
                               '${order!.tanggal.day}/${order!.tanggal.month}/${order!.tanggal.year} ${order!.tanggal.hour}:${order!.tanggal.minute}',
